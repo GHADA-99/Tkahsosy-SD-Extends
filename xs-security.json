@@ -1,0 +1,86 @@
+{
+  "xsappname": "medsync",
+  "tenant-mode": "dedicated",
+  "description": "MedSync Medical Synchronization Application Security Configuration",
+  "scopes": [
+    {
+      "name"       : "$XSAPPNAME.patient",
+      "description": "Patient user scope – read own records and manage appointments"
+    },
+    {
+      "name"       : "$XSAPPNAME.doctor",
+      "description": "Doctor user scope – manage patient records and appointments"
+    },
+    {
+      "name"       : "$XSAPPNAME.admin",
+      "description": "Administrator scope – full access including audit logs and system config"
+    }
+  ],
+  "attributes": [
+    {
+      "name"       : "Department",
+      "description": "Hospital department identifier",
+      "valueType"  : "string"
+    },
+    {
+      "name"       : "LicenseNumber",
+      "description": "Doctor medical license number",
+      "valueType"  : "string"
+    }
+  ],
+  "role-templates": [
+    {
+      "name"              : "PatientUser",
+      "description"       : "Role for patient users",
+      "scope-references"  : ["$XSAPPNAME.patient"],
+      "attribute-references": []
+    },
+    {
+      "name"              : "DoctorUser",
+      "description"       : "Role for medical doctors and nurses",
+      "scope-references"  : ["$XSAPPNAME.doctor"],
+      "attribute-references": ["Department", "LicenseNumber"]
+    },
+    {
+      "name"              : "SystemAdministrator",
+      "description"       : "Role for system administrators",
+      "scope-references"  : [
+        "$XSAPPNAME.patient",
+        "$XSAPPNAME.doctor",
+        "$XSAPPNAME.admin"
+      ],
+      "attribute-references": []
+    }
+  ],
+  "role-collections": [
+    {
+      "name"       : "MedSync_Patient",
+      "description": "MedSync patient user collection",
+      "role-template-references": [
+        "$XSAPPNAME.PatientUser"
+      ]
+    },
+    {
+      "name"       : "MedSync_Doctor",
+      "description": "MedSync doctor user collection",
+      "role-template-references": [
+        "$XSAPPNAME.DoctorUser"
+      ]
+    },
+    {
+      "name"       : "MedSync_Admin",
+      "description": "MedSync administrator collection",
+      "role-template-references": [
+        "$XSAPPNAME.SystemAdministrator"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "token-validity"        : 3600,
+    "refresh-token-validity": 86400,
+    "redirect-uris"         : [
+      "https://*.hana.ondemand.com/**",
+      "http://localhost:4004/**"
+    ]
+  }
+}

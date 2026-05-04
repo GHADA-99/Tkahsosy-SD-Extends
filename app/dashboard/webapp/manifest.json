@@ -1,0 +1,64 @@
+{
+  "_version": "1.60.0",
+  "sap.app": {
+    "id"         : "medsync.dashboard",
+    "type"       : "application",
+    "title"      : "MedSync Dashboard",
+    "description": "Operations dashboard for MedSync",
+    "applicationVersion": { "version": "1.0.0" },
+    "dataSources": {
+      "mainService": {
+        "uri" : "/api/",
+        "type": "OData",
+        "settings": { "odataVersion": "4.0" }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": { "desktop": true, "tablet": true, "phone": true }
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "medsync.dashboard.view.Dashboard",
+      "type"    : "XML",
+      "async"   : true,
+      "id"      : "app"
+    },
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": { "sap.m": {}, "sap.ui.layout": {}, "sap.f": {} }
+    },
+    "contentDensities": { "compact": true, "cozy": true },
+    "models": {
+      "": {
+        "dataSource": "mainService",
+        "preload"   : true,
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode"      : "Server",
+          "autoExpandSelect"   : true
+        }
+      },
+      "stats": {
+        "type": "sap.ui.model.json.JSONModel"
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass"       : "sap.m.routing.Router",
+        "viewType"          : "XML",
+        "viewPath"          : "medsync.dashboard.view",
+        "controlId"         : "app",
+        "controlAggregation": "pages",
+        "async"             : true
+      },
+      "routes": [
+        { "name": "Dashboard", "pattern": "", "target": "Dashboard" }
+      ],
+      "targets": {
+        "Dashboard": { "viewName": "Dashboard", "viewId": "Dashboard" }
+      }
+    }
+  }
+}

@@ -1,0 +1,39 @@
+transactionId,examCode,examNameEn,examNameAr,modality,price,transactionDate
+TX-84210,CT-CHEST-C,CT Chest with Contrast,أشعة مقطعية للصدر مع صبغة,CT,862,2026-05-04T14:12:00Z
+TX-84209,MRI-BRAIN-C,MRI Brain with Contrast,رنين مغناطيسي للدماغ مع صبغة,MRI,1463,2026-05-04T14:10:00Z
+TX-84208,XR-CHEST-PA,Chest X-Ray PA View,أشعة سينية للصدر أمامي,XR,118,2026-05-04T14:07:00Z
+TX-84207,US-ABD-FULL,Abdominal Ultrasound,سونار للبطن الكامل,US,291,2026-05-04T14:03:00Z
+TX-84206,CT-ABD-NC,CT Abdomen without Contrast,أشعة مقطعية للبطن بدون صبغة,CT,735,2026-05-04T13:58:00Z
+TX-84205,MRI-KNEE-R,MRI Right Knee,رنين مغناطيسي للركبة اليمنى,MRI,1215,2026-05-04T13:53:00Z
+TX-84204,PET-ONCO,PET/CT Oncology Scan,مسح بت/سي تي للأورام,PET,3218,2026-05-04T13:47:00Z
+TX-84203,XR-KNEE-AP,Knee X-Ray AP and Lateral,أشعة سينية للركبة أمامي وجانبي,XR,152,2026-05-04T13:40:00Z
+TX-84202,CT-HEAD-NC,CT Brain without Contrast,أشعة مقطعية للدماغ بدون صبغة,CT,662,2026-05-04T13:32:00Z
+TX-84201,US-PELVIC-T,Transvaginal Ultrasound,سونار عبر المهبل,US,308,2026-05-04T13:23:00Z
+TX-84200,MRI-SPINE-C,MRI Cervical Spine,رنين مغناطيسي للفقرات العنقية,MRI,1334,2026-05-04T13:13:00Z
+TX-84199,NM-BONE,Nuclear Bone Scan,مسح ذري للعظام,NM,894,2026-05-04T13:02:00Z
+TX-84198,CT-SPINE-L,CT Lumbar Spine,أشعة مقطعية للفقرات القطنية,CT,704,2026-05-04T12:50:00Z
+TX-84197,MG-BILAT,Bilateral Mammography,أشعة الثدي الثنائية,MG,437,2026-05-04T12:37:00Z
+TX-84196,XR-HAND-R,Right Hand X-Ray,أشعة سينية لليد اليمنى,XR,122,2026-05-04T12:23:00Z
+TX-84195,US-THYR,Thyroid Ultrasound,سونار الغدة الدرقية,US,252,2026-05-04T12:08:00Z
+TX-84194,CT-CHEST-C,CT Chest with Contrast,أشعة مقطعية للصدر مع صبغة,CT,841,2026-05-04T11:52:00Z
+TX-84193,MRI-ABD-C,MRI Abdomen with Contrast,رنين مغناطيسي للبطن مع صبغة,MRI,1592,2026-05-04T11:35:00Z
+TX-84192,XR-CHEST-PA,Chest X-Ray PA View,أشعة سينية للصدر أمامي,XR,127,2026-05-04T11:17:00Z
+TX-84191,CT-ABD-NC,CT Abdomen without Contrast,أشعة مقطعية للبطن بدون صبغة,CT,718,2026-05-04T10:58:00Z
+TX-84190,PET-ONCO,PET/CT Oncology Scan,مسح بت/سي تي للأورام,PET,3188,2026-05-04T10:38:00Z
+TX-84189,US-ABD-FULL,Abdominal Ultrasound,سونار للبطن الكامل,US,274,2026-05-04T10:17:00Z
+TX-84188,MRI-BRAIN-C,MRI Brain with Contrast,رنين مغناطيسي للدماغ مع صبغة,MRI,1438,2026-05-04T09:55:00Z
+TX-84187,CT-HEAD-NC,CT Brain without Contrast,أشعة مقطعية للدماغ بدون صبغة,CT,672,2026-05-04T09:32:00Z
+TX-84186,XR-KNEE-AP,Knee X-Ray AP and Lateral,أشعة سينية للركبة أمامي وجانبي,XR,138,2026-05-04T09:08:00Z
+TX-84185,NM-BONE,Nuclear Bone Scan,مسح ذري للعظام,NM,867,2026-05-04T08:43:00Z
+TX-84184,MRI-KNEE-R,MRI Right Knee,رنين مغناطيسي للركبة اليمنى,MRI,1193,2026-05-04T08:17:00Z
+TX-84183,US-PELVIC-T,Transvaginal Ultrasound,سونار عبر المهبل,US,333,2026-05-04T07:50:00Z
+TX-84182,CT-SPINE-L,CT Lumbar Spine,أشعة مقطعية للفقرات القطنية,CT,681,2026-05-04T07:22:00Z
+TX-84181,MG-BILAT,Bilateral Mammography,أشعة الثدي الثنائية,MG,408,2026-05-04T06:53:00Z
+TX-84180,XR-HAND-R,Right Hand X-Ray,أشعة سينية لليد اليمنى,XR,117,2026-05-04T06:23:00Z
+TX-84179,CT-CHEST-C,CT Chest with Contrast,أشعة مقطعية للصدر مع صبغة,CT,858,2026-05-04T05:52:00Z
+TX-84178,MRI-SPINE-C,MRI Cervical Spine,رنين مغناطيسي للفقرات العنقية,MRI,1311,2026-05-04T05:20:00Z
+TX-84177,US-ABD-FULL,Abdominal Ultrasound,سونار للبطن الكامل,US,285,2026-05-04T04:47:00Z
+TX-84176,XR-CHEST-PA,Chest X-Ray PA View,أشعة سينية للصدر أمامي,XR,113,2026-05-04T04:13:00Z
+TX-84175,CT-ABD-NC,CT Abdomen without Contrast,أشعة مقطعية للبطن بدون صبغة,CT,726,2026-05-04T03:38:00Z
+TX-84174,PET-ONCO,PET/CT Oncology Scan,مسح بت/سي تي للأورام,PET,3207,2026-05-04T03:02:00Z
+TX-84173,MRI-ABD-C,MRI Abdomen with Contrast,رنين مغناطيسي للبطن مع صبغة,MRI,1568,2026-05-04T02:25:00Z

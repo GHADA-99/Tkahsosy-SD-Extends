@@ -1,0 +1,220 @@
+<mvc:View
+  controllerName="medsync.dashboard.controller.Dashboard"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:l="sap.ui.layout"
+  xmlns:f="sap.f"
+  displayBlock="true">
+
+  <Page
+    id="dashboardPage"
+    title="MedSync Dashboard"
+    showNavButton="false">
+
+    <headerContent>
+      <Button icon="sap-icon://refresh" tooltip="Refresh" press="onRefresh"/>
+      <Text text="Last updated: {stats>/lastRefresh}" class="sapUiSmallMarginBegin"/>
+    </headerContent>
+
+    <content>
+
+      <!-- KPI Tiles Row -->
+      <HBox
+        wrap="Wrap"
+        class="sapUiSmallMargin"
+        justifyContent="SpaceBetween">
+
+        <!-- Total Patients -->
+        <GenericTile
+          header="Total Patients"
+          subheader="Registered patients"
+          press="onNavToPatients"
+          class="sapUiSmallMarginEnd sapUiSmallMarginBottom"
+          tileContent="{= [{header: 'Total', value: String(${stats>/totalPatients})}]}">
+          <tileContent>
+            <TileContent unit="patients" footer="Active in system">
+              <content>
+                <NumericContent
+                  value="{stats>/totalPatients}"
+                  valueColor="Good"
+                  icon="sap-icon://customer"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+
+        <!-- Today's Appointments -->
+        <GenericTile
+          header="Today's Appointments"
+          subheader="Scheduled for today"
+          press="onNavToAppointments"
+          class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+          <tileContent>
+            <TileContent unit="appointments" footer="Across all doctors">
+              <content>
+                <NumericContent
+                  value="{stats>/todaysAppointments}"
+                  valueColor="Neutral"
+                  icon="sap-icon://calendar"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+
+        <!-- Pending Notifications -->
+        <GenericTile
+          header="Pending Notifications"
+          subheader="Unread system alerts"
+          class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+          <tileContent>
+            <TileContent unit="notifications" footer="Awaiting action">
+              <content>
+                <NumericContent
+                  value="{stats>/pendingNotifications}"
+                  valueColor="{= ${stats>/pendingNotifications} > 10 ? 'Critical' : 'Good'}"
+                  icon="sap-icon://bell"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+
+        <!-- Active Doctors -->
+        <GenericTile
+          header="Active Doctors"
+          subheader="Currently registered"
+          class="sapUiSmallMarginBottom">
+          <tileContent>
+            <TileContent unit="doctors" footer="Available today">
+              <content>
+                <NumericContent
+                  value="{stats>/totalDoctors}"
+                  valueColor="Good"
+                  icon="sap-icon://stethoscope"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+
+      </HBox>
+
+      <!-- Completion Rate Progress Bar -->
+      <Panel
+        headerText="Appointment Completion Rate"
+        expandable="true"
+        expanded="true"
+        class="sapUiSmallMarginBeginEnd sapUiSmallMarginBottom">
+        <VBox class="sapUiSmallMargin">
+          <Text text="Completed vs Total Appointments" class="sapUiSmallMarginBottom"/>
+          <ProgressIndicator
+            percentValue="{stats>/completionRate}"
+            displayValue="{stats>/completionRate}%"
+            state="{path: 'stats>/completionRate', formatter: '.formatProgressColor'}"
+            showValue="true"
+            height="2rem"/>
+          <HBox justifyContent="SpaceBetween" class="sapUiTinyMarginTop">
+            <Text text="{= 'Completed: ' + ${stats>/completedAppointments}}" style="color:#107E3E;"/>
+            <Text text="{= 'Cancelled: ' + ${stats>/cancelledAppointments}}" style="color:#BB0000;"/>
+            <Text text="{= 'Total: ' + ${stats>/totalAppointments}}"/>
+          </HBox>
+        </VBox>
+      </Panel>
+
+      <!-- Today's Appointments Table -->
+      <Panel
+        headerText="Today's Schedule"
+        expandable="true"
+        expanded="true"
+        class="sapUiSmallMarginBeginEnd sapUiSmallMarginBottom">
+        <Table
+          id="todaysApptTable"
+          items="{
+            path: '/Appointments',
+            parameters: {
+              $orderby : 'scheduledDate',
+              $expand  : 'patient,doctor',
+              $filter  : 'status ne \'cancelled\' and status ne \'completed\''
+            }
+          }"
+          noDataText="No appointments for today."
+          growing="true"
+          growingThreshold="10">
+          <columns>
+            <Column width="10rem"><Text text="Time"/></Column>
+            <Column><Text text="Patient"/></Column>
+            <Column minScreenWidth="Tablet" demandPopin="true"><Text text="Doctor"/></Column>
+            <Column width="9rem" minScreenWidth="Tablet" demandPopin="true"><Text text="Type"/></Column>
+            <Column width="7rem"><Text text="Status"/></Column>
+          </columns>
+          <items>
+            <ColumnListItem>
+              <cells>
+                <Text text="{path: 'scheduledDate', formatter: '.formatDate'}"/>
+                <Text text="{= ${patient/firstName} + ' ' + ${patient/lastName}}"/>
+                <Text text="{= 'Dr. ' + ${doctor/firstName} + ' ' + ${doctor/lastName}}"/>
+                <Text text="{appointmentType}"/>
+                <ObjectStatus
+                  text="{status}"
+                  state="{path: 'status', formatter: '.formatStatusState'}"/>
+              </cells>
+            </ColumnListItem>
+          </items>
+        </Table>
+      </Panel>
+
+      <!-- Recent Notifications -->
+      <Panel
+        headerText="Recent Notifications"
+        expandable="true"
+        expanded="true"
+        class="sapUiSmallMarginBeginEnd sapUiSmallMarginBottom">
+        <List
+          id="notificationsList"
+          items="{
+            path: '/Notifications',
+            parameters: {
+              $orderby: 'createdAt desc',
+              $top    : 10
+            }
+          }"
+          noDataText="No notifications.">
+          <items>
+            <StandardListItem
+              title="{title}"
+              description="{message}"
+              icon="{= ${isRead} ? 'sap-icon://message-information' : 'sap-icon://bell'}"
+              iconDensityAware="false"
+              info="{= ${isRead} ? 'Read' : 'Unread'}"
+              infoState="{= ${isRead} ? 'None' : 'Warning'}"/>
+          </items>
+        </List>
+      </Panel>
+
+      <!-- Quick Navigation -->
+      <Panel
+        headerText="Quick Navigation"
+        expandable="true"
+        expanded="false"
+        class="sapUiSmallMarginBeginEnd sapUiSmallMarginBottom">
+        <HBox wrap="Wrap" class="sapUiSmallMargin" justifyContent="Start">
+          <Button
+            text="Manage Patients"
+            icon="sap-icon://customer"
+            type="Emphasized"
+            press="onNavToPatients"
+            class="sapUiSmallMarginEnd sapUiSmallMarginBottom"/>
+          <Button
+            text="View Appointments"
+            icon="sap-icon://calendar"
+            press="onNavToAppointments"
+            class="sapUiSmallMarginEnd sapUiSmallMarginBottom"/>
+          <Button
+            text="Admin Panel"
+            icon="sap-icon://settings"
+            press="onNavToAdmin"
+            class="sapUiSmallMarginBottom"/>
+        </HBox>
+      </Panel>
+
+    </content>
+  </Page>
+</mvc:View>

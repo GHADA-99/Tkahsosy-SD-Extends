@@ -1,0 +1,6 @@
+ID,firstName,lastName,specialization,licenseNumber,email,phone,department,availability,isActive
+b2c3d4e5-f6a7-8901-bcde-f12345678901,James,Williams,Cardiology,MD123456,james.williams@medsync.com,+1-555-0201,Department of Cardiology,Monday to Friday 08:00-17:00,true
+b2c3d4e5-f6a7-8901-bcde-f12345678902,Patricia,Brown,Neurology,MD234567,patricia.brown@medsync.com,+1-555-0202,Department of Neurology,Monday to Thursday 09:00-18:00,true
+b2c3d4e5-f6a7-8901-bcde-f12345678903,Richard,Jones,Orthopedics,MD345678,richard.jones@medsync.com,+1-555-0203,Department of Orthopedics,Tuesday to Saturday 08:00-16:00,true
+b2c3d4e5-f6a7-8901-bcde-f12345678904,Linda,Miller,Endocrinology,MD456789,linda.miller@medsync.com,+1-555-0204,Department of Endocrinology,Monday Wednesday Friday 10:00-18:00,true
+b2c3d4e5-f6a7-8901-bcde-f12345678905,Charles,Davis,General Practice,MD567890,charles.davis@medsync.com,+1-555-0205,General Medicine,Monday to Friday 08:00-18:00,true

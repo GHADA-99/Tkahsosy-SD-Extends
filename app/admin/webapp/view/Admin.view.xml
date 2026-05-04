@@ -1,0 +1,217 @@
+<mvc:View
+  controllerName="medsync.admin.controller.Admin"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:l="sap.ui.layout"
+  displayBlock="true">
+
+  <Page
+    id="adminPage"
+    title="Administration Panel"
+    showNavButton="false">
+
+    <headerContent>
+      <Button icon="sap-icon://refresh" tooltip="Refresh stats" press="onRefreshStats"/>
+    </headerContent>
+
+    <content>
+
+      <!-- System Stats Row -->
+      <HBox wrap="Wrap" class="sapUiSmallMargin" justifyContent="SpaceBetween">
+        <GenericTile
+          header="Patients"
+          class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+          <tileContent>
+            <TileContent>
+              <content>
+                <NumericContent value="{adminStats>/totalPatients}" valueColor="Good" icon="sap-icon://customer"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+        <GenericTile
+          header="Doctors"
+          class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+          <tileContent>
+            <TileContent>
+              <content>
+                <NumericContent value="{adminStats>/totalDoctors}" valueColor="Good" icon="sap-icon://stethoscope"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+        <GenericTile
+          header="Appointments"
+          class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+          <tileContent>
+            <TileContent>
+              <content>
+                <NumericContent value="{adminStats>/totalAppointments}" valueColor="Neutral" icon="sap-icon://calendar"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+        <GenericTile
+          header="Audit Log Entries"
+          class="sapUiSmallMarginBottom">
+          <tileContent>
+            <TileContent>
+              <content>
+                <NumericContent value="{adminStats>/totalAuditLogs}" valueColor="Neutral" icon="sap-icon://document-text"/>
+              </content>
+            </TileContent>
+          </tileContent>
+        </GenericTile>
+      </HBox>
+
+      <!-- Tab Container -->
+      <IconTabBar
+        id="adminTabs"
+        select="onTabSelect"
+        class="sapUiSmallMarginBeginEnd">
+
+        <!-- Audit Logs Tab -->
+        <items>
+          <IconTabFilter
+            key="auditLogs"
+            icon="sap-icon://document-text"
+            text="Audit Logs">
+            <VBox>
+              <Toolbar class="sapUiSmallMarginBottom">
+                <SearchField
+                  placeholder="Search audit logs…"
+                  width="280px"
+                  search="onSearchAuditLog"
+                  liveChange="onSearchAuditLog"/>
+                <Select class="sapUiSmallMarginBegin" change="onFilterAuditAction">
+                  <items>
+                    <core:Item xmlns:core="sap.ui.core" key="all"    text="All Actions"/>
+                    <core:Item xmlns:core="sap.ui.core" key="CREATE" text="Create"/>
+                    <core:Item xmlns:core="sap.ui.core" key="UPDATE" text="Update"/>
+                    <core:Item xmlns:core="sap.ui.core" key="DELETE" text="Delete"/>
+                    <core:Item xmlns:core="sap.ui.core" key="READ"   text="Read"/>
+                    <core:Item xmlns:core="sap.ui.core" key="LOGIN"  text="Login"/>
+                  </items>
+                </Select>
+                <ToolbarSpacer/>
+                <Button
+                  icon="sap-icon://refresh"
+                  text="Refresh"
+                  press="onRefreshAuditLogs"/>
+                <Button
+                  icon="sap-icon://download"
+                  text="Export"
+                  press="onExportAuditLogs"/>
+              </Toolbar>
+
+              <Table
+                id="auditLogsTable"
+                items="{
+                  path: '/AuditLogs',
+                  parameters: {
+                    $orderby: 'createdAt desc'
+                  }
+                }"
+                growing="true"
+                growingThreshold="30"
+                noDataText="No audit log entries found.">
+                <columns>
+                  <Column width="14rem"><Text text="Timestamp"/></Column>
+                  <Column width="8rem"><Text text="Action"/></Column>
+                  <Column><Text text="User"/></Column>
+                  <Column><Text text="Entity"/></Column>
+                  <Column><Text text="Entity ID"/></Column>
+                  <Column width="6rem"><Text text="Result"/></Column>
+                  <Column width="10rem" minScreenWidth="Desktop" demandPopin="true"><Text text="IP Address"/></Column>
+                </columns>
+                <items>
+                  <ColumnListItem>
+                    <cells>
+                      <Text text="{path: 'createdAt', formatter: '.formatDate'}"/>
+                      <HBox>
+                        <core:Icon xmlns:core="sap.ui.core"
+                          src="{path: 'action', formatter: '.formatActionIcon'}"
+                          class="sapUiSmallMarginEnd"/>
+                        <Text text="{action}"/>
+                      </HBox>
+                      <Text text="{userId}"/>
+                      <Text text="{entity}"/>
+                      <Text text="{entityId}" maxLines="1"/>
+                      <ObjectStatus
+                        text="{path: 'success', formatter: '.formatSuccessText'}"
+                        state="{path: 'success', formatter: '.formatSuccessState'}"/>
+                      <Text text="{ipAddress}"/>
+                    </cells>
+                  </ColumnListItem>
+                </items>
+              </Table>
+            </VBox>
+          </IconTabFilter>
+
+          <!-- System Config Tab -->
+          <IconTabFilter
+            key="systemConfig"
+            icon="sap-icon://settings"
+            text="System Config">
+            <VBox class="sapUiSmallMargin">
+              <Title text="System Configuration" level="H3" class="sapUiSmallMarginBottom"/>
+              <l:SimpleForm layout="ColumnLayout" editable="false">
+                <l:content>
+                  <Label text="OData Service URL"/>
+                  <Link text="/api/" href="/api/" target="_blank"/>
+                  <Label text="OData Metadata"/>
+                  <Link text="/api/$metadata" href="/api/$metadata" target="_blank"/>
+                  <Label text="Application Version"/>
+                  <Text text="1.0.0"/>
+                  <Label text="CAP Version"/>
+                  <Text text="@sap/cds v9"/>
+                  <Label text="Database"/>
+                  <Text text="SQLite (Development)"/>
+                  <Label text="Authentication"/>
+                  <Text text="Role-based (patient / doctor / admin)"/>
+                </l:content>
+              </l:SimpleForm>
+            </VBox>
+          </IconTabFilter>
+
+          <!-- Reports Tab -->
+          <IconTabFilter
+            key="reports"
+            icon="sap-icon://bar-chart"
+            text="Reports">
+            <VBox class="sapUiSmallMargin">
+              <Title text="Data Reports" level="H3" class="sapUiSmallMarginBottom"/>
+              <Text text="Use the links below to access raw OData feeds for reporting purposes." class="sapUiSmallMarginBottom"/>
+              <List>
+                <StandardListItem
+                  title="All Patients (JSON)"
+                  description="Export patient list"
+                  icon="sap-icon://customer"
+                  type="Navigation"
+                  press="window.open('/api/Patients?$format=json','_blank')"/>
+                <StandardListItem
+                  title="All Appointments (JSON)"
+                  description="Export appointments"
+                  icon="sap-icon://calendar"
+                  type="Navigation"
+                  press="window.open('/api/Appointments?$format=json','_blank')"/>
+                <StandardListItem
+                  title="All Doctors (JSON)"
+                  description="Export doctor list"
+                  icon="sap-icon://stethoscope"
+                  type="Navigation"/>
+                <StandardListItem
+                  title="Audit Logs (JSON)"
+                  description="Export full audit trail"
+                  icon="sap-icon://document-text"
+                  type="Navigation"/>
+              </List>
+            </VBox>
+          </IconTabFilter>
+
+        </items>
+      </IconTabBar>
+
+    </content>
+  </Page>
+</mvc:View>

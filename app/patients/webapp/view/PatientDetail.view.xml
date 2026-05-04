@@ -1,0 +1,189 @@
+<mvc:View
+  controllerName="medsync.patients.controller.PatientDetail"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:l="sap.ui.layout"
+  xmlns:f="sap.ui.layout.form"
+  displayBlock="true">
+
+  <Page
+    id="patientDetailPage"
+    title="Patient Detail"
+    showNavButton="true"
+    navButtonPress="onNavBack">
+
+    <headerContent>
+      <Button
+        text="{= ${view>/editMode} ? 'Save' : 'Edit'}"
+        type="Emphasized"
+        icon="{= ${view>/editMode} ? 'sap-icon://save' : 'sap-icon://edit'}"
+        press="{= ${view>/editMode} ? '.onSave' : '.onEdit'}"/>
+      <Button
+        visible="{view>/editMode}"
+        text="Cancel"
+        icon="sap-icon://decline"
+        press="onCancelEdit"/>
+      <Button
+        icon="sap-icon://calendar"
+        text="New Appointment"
+        press="onNewAppointment"/>
+    </headerContent>
+
+    <content>
+      <ObjectHeader
+        title="{= ${lastName} + ', ' + ${firstName}}"
+        intro="Patient ID: {ID}"
+        icon="sap-icon://person-placeholder">
+        <statuses>
+          <ObjectStatus
+            text="{= ${isActive} ? 'Active' : 'Inactive'}"
+            state="{= ${isActive} ? 'Success' : 'Error'}"/>
+        </statuses>
+        <attributes>
+          <ObjectAttribute
+            title="Date of Birth"
+            text="{path: 'dateOfBirth', formatter: '.formatter.formatDate'}"/>
+          <ObjectAttribute title="Gender" text="{path: 'gender', formatter: '.formatter.formatGender'}"/>
+          <ObjectAttribute title="Email"  text="{email}"/>
+          <ObjectAttribute title="Phone"  text="{phone}"/>
+        </attributes>
+      </ObjectHeader>
+
+      <!-- Personal Information Panel -->
+      <Panel headerText="Personal Information" expandable="true" expanded="true" class="sapUiSmallMargin">
+        <f:SimpleForm
+          layout="ColumnLayout"
+          editable="{view>/editMode}">
+          <f:content>
+            <Label text="First Name"/>
+            <Input value="{firstName}" editable="{view>/editMode}"/>
+            <Label text="Last Name"/>
+            <Input value="{lastName}" editable="{view>/editMode}"/>
+            <Label text="Date of Birth"/>
+            <DatePicker value="{dateOfBirth}" editable="{view>/editMode}" valueFormat="yyyy-MM-dd" displayFormat="MMM d, yyyy"/>
+            <Label text="Gender"/>
+            <Select selectedKey="{gender}" enabled="{view>/editMode}">
+              <items>
+                <core:Item xmlns:core="sap.ui.core" key="male"        text="Male"/>
+                <core:Item xmlns:core="sap.ui.core" key="female"      text="Female"/>
+                <core:Item xmlns:core="sap.ui.core" key="other"       text="Other"/>
+                <core:Item xmlns:core="sap.ui.core" key="unspecified" text="Unspecified"/>
+              </items>
+            </Select>
+          </f:content>
+        </f:SimpleForm>
+      </Panel>
+
+      <!-- Contact Panel -->
+      <Panel headerText="Contact &amp; Address" expandable="true" expanded="true" class="sapUiSmallMargin">
+        <f:SimpleForm layout="ColumnLayout" editable="{view>/editMode}">
+          <f:content>
+            <Label text="Email"/>
+            <Input value="{email}" editable="{view>/editMode}" type="Email"/>
+            <Label text="Phone"/>
+            <Input value="{phone}" editable="{view>/editMode}" type="Tel"/>
+            <Label text="Street"/>
+            <Input value="{street}" editable="{view>/editMode}"/>
+            <Label text="City"/>
+            <Input value="{city}" editable="{view>/editMode}"/>
+            <Label text="State"/>
+            <Input value="{state}" editable="{view>/editMode}"/>
+            <Label text="ZIP"/>
+            <Input value="{zip}" editable="{view>/editMode}"/>
+            <Label text="Country"/>
+            <Input value="{country}" editable="{view>/editMode}"/>
+          </f:content>
+        </f:SimpleForm>
+      </Panel>
+
+      <!-- Medical Information Panel -->
+      <Panel headerText="Medical Information" expandable="true" expanded="true" class="sapUiSmallMargin">
+        <f:SimpleForm layout="ColumnLayout" editable="{view>/editMode}">
+          <f:content>
+            <Label text="Medical History"/>
+            <TextArea value="{medicalHistory}" editable="{view>/editMode}" rows="4" growing="true"/>
+            <Label text="Allergies"/>
+            <Input value="{allergies}" editable="{view>/editMode}"/>
+          </f:content>
+        </f:SimpleForm>
+      </Panel>
+
+      <!-- Appointments Panel -->
+      <Panel headerText="Appointments" expandable="true" expanded="true" class="sapUiSmallMargin">
+        <Table
+          items="{appointments}"
+          noDataText="No appointments found.">
+          <columns>
+            <Column><Text text="Date"/></Column>
+            <Column><Text text="Doctor"/></Column>
+            <Column><Text text="Type"/></Column>
+            <Column><Text text="Status"/></Column>
+          </columns>
+          <items>
+            <ColumnListItem>
+              <cells>
+                <Text text="{path: 'scheduledDate', formatter: '.formatter.formatDateTime'}"/>
+                <Text text="{= ${doctor/firstName} + ' ' + ${doctor/lastName}}"/>
+                <Text text="{appointmentType}"/>
+                <ObjectStatus
+                  text="{path: 'status', formatter: '.formatter.formatAppointmentStatus'}"
+                  state="{path: 'status', formatter: '.formatter.formatStatusState'}"/>
+              </cells>
+            </ColumnListItem>
+          </items>
+        </Table>
+      </Panel>
+
+      <!-- Medical Records Panel -->
+      <Panel headerText="Medical Records" expandable="true" expanded="false" class="sapUiSmallMargin">
+        <Table
+          items="{medicalRecords}"
+          noDataText="No medical records found.">
+          <columns>
+            <Column><Text text="Date"/></Column>
+            <Column><Text text="Diagnosis"/></Column>
+            <Column><Text text="Doctor"/></Column>
+            <Column><Text text="Confidentiality"/></Column>
+          </columns>
+          <items>
+            <ColumnListItem type="Active" press="onViewMedicalRecord">
+              <cells>
+                <Text text="{path: 'recordDate', formatter: '.formatter.formatDate'}"/>
+                <Text text="{diagnosis}" maxLines="2"/>
+                <Text text="{= ${doctor/firstName} + ' ' + ${doctor/lastName}}"/>
+                <ObjectStatus text="{confidentiality}"/>
+              </cells>
+            </ColumnListItem>
+          </items>
+        </Table>
+      </Panel>
+
+      <!-- Doctor Relationships Panel -->
+      <Panel headerText="Assigned Doctors" expandable="true" expanded="false" class="sapUiSmallMargin">
+        <Table
+          items="{doctors}"
+          noDataText="No doctors assigned.">
+          <columns>
+            <Column><Text text="Doctor"/></Column>
+            <Column><Text text="Specialization"/></Column>
+            <Column><Text text="Relationship"/></Column>
+            <Column><Text text="Primary"/></Column>
+          </columns>
+          <items>
+            <ColumnListItem>
+              <cells>
+                <Text text="{= ${doctor/firstName} + ' ' + ${doctor/lastName}}"/>
+                <Text text="{doctor/specialization}"/>
+                <Text text="{relationshipType}"/>
+                <ObjectStatus
+                  text="{= ${isPrimary} ? 'Primary' : 'Secondary'}"
+                  state="{= ${isPrimary} ? 'Success' : 'None'}"/>
+              </cells>
+            </ColumnListItem>
+          </items>
+        </Table>
+      </Panel>
+
+    </content>
+  </Page>
+</mvc:View>

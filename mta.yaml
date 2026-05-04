@@ -1,0 +1,82 @@
+_schema-version: '3.1'
+ID: medsync
+description: MedSync Medical Synchronization Application
+version: 1.0.0
+
+modules:
+
+  # ── CAP Service (Node.js) ──────────────────────────────────────────────────
+  - name: medsync-srv
+    type: nodejs
+    path: .
+    parameters:
+      buildpack: nodejs_buildpack
+      memory: 512M
+      disk-quota: 1G
+    build-parameters:
+      builder: npm
+      build-result: .
+      ignore:
+        - node_modules/
+        - .env
+        - '*.local.*'
+    properties:
+      NODE_ENV: production
+    requires:
+      - name: medsync-db
+      - name: medsync-auth
+    provides:
+      - name: medsync-srv-api
+        properties:
+          srv-url: ${default-url}
+
+  # ── HANA DB Deployer ───────────────────────────────────────────────────────
+  - name: medsync-db-deployer
+    type: hdb
+    path: db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: medsync-db
+
+  # ── UI Apps (Approuter) ─────────────────────────────────────────────────────
+  - name: medsync-approuter
+    type: approuter.nodejs
+    path: app
+    parameters:
+      memory: 256M
+      disk-quota: 512M
+    requires:
+      - name: medsync-auth
+      - name: medsync-srv-api
+        group: destinations
+        properties:
+          name: medsync-srv
+          url : ~{srv-url}
+          forwardAuthToken: true
+    build-parameters:
+      ignore:
+        - node_modules/
+        - '*.local.*'
+
+resources:
+
+  # ── SAP HANA Cloud ─────────────────────────────────────────────────────────
+  - name: medsync-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service     : hana
+      service-plan: hdi-shared
+    properties:
+      hdi-service-name: ${service-name}
+
+  # ── XSUAA Authentication ───────────────────────────────────────────────────
+  - name: medsync-auth
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service     : xsuaa
+      service-plan: application
+      path        : ./xs-security.json
+      config:
+        xsappname : medsync-${org}-${space}
+        tenant-mode: dedicated

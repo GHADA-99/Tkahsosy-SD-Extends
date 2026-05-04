@@ -1,0 +1,97 @@
+{
+  "_version": "1.60.0",
+  "sap.app": {
+    "id"         : "medsync.patients",
+    "type"       : "application",
+    "title"      : "MedSync Patients",
+    "description": "Patient management application for MedSync",
+    "applicationVersion": { "version": "1.0.0" },
+    "dataSources": {
+      "mainService": {
+        "uri" : "/api/",
+        "type": "OData",
+        "settings": {
+          "odataVersion": "4.0"
+        }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology"     : "UI5",
+    "deviceTypes"    : { "desktop": true, "tablet": true, "phone": true },
+    "supportedThemes": ["sap_horizon", "sap_fiori_3"]
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName"  : "medsync.patients.view.Patients",
+      "type"      : "XML",
+      "async"     : true,
+      "id"        : "app"
+    },
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": {
+        "sap.m"        : {},
+        "sap.ui.layout": {},
+        "sap.f"        : {}
+      }
+    },
+    "contentDensities": { "compact": true, "cozy": true },
+    "models": {
+      "": {
+        "dataSource"     : "mainService",
+        "preload"        : true,
+        "settings"       : {
+          "synchronizationMode": "None",
+          "operationMode"      : "Server",
+          "autoExpandSelect"   : true
+        }
+      },
+      "i18n": {
+        "type": "sap.ui.model.resource.ResourceModel",
+        "settings": { "bundleName": "medsync.patients.i18n.i18n" }
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass"   : "sap.m.routing.Router",
+        "viewType"      : "XML",
+        "viewPath"      : "medsync.patients.view",
+        "controlId"     : "app",
+        "controlAggregation": "pages",
+        "async"         : true
+      },
+      "routes": [
+        {
+          "name"   : "Patients",
+          "pattern": "",
+          "target" : "Patients"
+        },
+        {
+          "name"   : "PatientDetail",
+          "pattern": "Patients/{patientId}",
+          "target" : "PatientDetail"
+        },
+        {
+          "name"   : "PatientForm",
+          "pattern": "Patients/new",
+          "target" : "PatientForm"
+        }
+      ],
+      "targets": {
+        "Patients": {
+          "viewName": "Patients",
+          "viewId"  : "Patients"
+        },
+        "PatientDetail": {
+          "viewName": "PatientDetail",
+          "viewId"  : "PatientDetail"
+        },
+        "PatientForm": {
+          "viewName": "PatientForm",
+          "viewId"  : "PatientForm"
+        }
+      }
+    }
+  }
+}

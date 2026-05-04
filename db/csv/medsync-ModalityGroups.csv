@@ -1,0 +1,7 @@
+groupCode,name,modality,discount,qtyOrig,qtyUpdated,finished,firstThreshVol,firstThreshDiscount,secondThreshVol,secondThreshDiscount
+mg-ct-q2,CT Scans — Q2 Contract,CT,18,240,214,false,80,12,160,18
+mg-mri-prem,MRI Premium Bundle,MRI,25,120,120,true,30,18,60,25
+mg-xr-out,X-Ray Outpatient Block,XR,12,500,378,false,150,8,300,12
+mg-us-womens,Ultrasound — Women's Health,US,15,180,142,false,50,10,100,15
+mg-pet-onc,PET/CT Oncology Program,PET,30,48,48,true,15,20,30,30
+mg-mg-screen,Mammography Screening Drive,MG,20,320,97,false,100,12,200,20

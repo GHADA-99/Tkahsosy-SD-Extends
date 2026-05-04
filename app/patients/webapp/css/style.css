@@ -1,0 +1,71 @@
+/* MedSync Patients App – Custom Styles */
+
+:root {
+  --ms-primary     : #0066CC;
+  --ms-primary-dark: #004E9A;
+  --ms-accent      : #00A3E0;
+  --ms-accent-light: #E6F4FB;
+  --ms-success     : #107E3E;
+  --ms-warning     : #E9730C;
+  --ms-error       : #BB0000;
+  --ms-white       : #FFFFFF;
+  --ms-gray-light  : #F5F7FA;
+  --ms-radius      : 8px;
+}
+
+/* Page-level overrides */
+.sapMPage > .sapMPageHeader {
+  background-color: var(--ms-primary) !important;
+  color           : var(--ms-white) !important;
+}
+
+/* Table row hover */
+.sapMListTbl .sapMLIB:hover {
+  background-color: var(--ms-accent-light);
+}
+
+/* Status tokens */
+.msStatusActive {
+  color      : var(--ms-success);
+  font-weight: 600;
+}
+
+.msStatusInactive {
+  color: var(--ms-error);
+}
+
+/* Panel header accent */
+.sapMPanelHdr {
+  border-left: 4px solid var(--ms-primary);
+}
+
+/* ObjectHeader customisation */
+.sapMOH {
+  background: linear-gradient(135deg, #f0f6ff 0%, var(--ms-white) 100%);
+  border-bottom: 2px solid var(--ms-accent-light);
+}
+
+/* Search bar */
+.sapMSF {
+  border-radius: var(--ms-radius);
+}
+
+/* Create button emphasis */
+.sapMBtnEmphasized {
+  background-color: var(--ms-primary) !important;
+  border-color    : var(--ms-primary) !important;
+}
+
+.sapMBtnEmphasized:hover {
+  background-color: var(--ms-primary-dark) !important;
+}
+
+/* General padding helpers */
+.msCardPadding {
+  padding: 1rem;
+}
+
+/* Ensure table cells align nicely */
+.sapMListTblCell {
+  vertical-align: middle;
+}

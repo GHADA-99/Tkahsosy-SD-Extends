@@ -1,0 +1,136 @@
+<mvc:View
+  controllerName="medsync.appointments.controller.Appointments"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:l="sap.ui.layout"
+  displayBlock="true">
+
+  <Page
+    id="appointmentsPage"
+    title="Appointments"
+    showNavButton="false">
+
+    <headerContent>
+      <Button
+        icon="sap-icon://add"
+        text="New Appointment"
+        type="Emphasized"
+        press="onCreateAppointment"/>
+      <Button
+        icon="sap-icon://refresh"
+        tooltip="Refresh"
+        press="onRefresh"/>
+    </headerContent>
+
+    <subHeader>
+      <Bar>
+        <contentLeft>
+          <SearchField
+            id="apptSearch"
+            placeholder="Search appointments…"
+            width="280px"
+            search="onSearch"
+            liveChange="onSearch"/>
+          <Select
+            class="sapUiSmallMarginBegin"
+            change="onStatusFilterChange">
+            <items>
+              <core:Item xmlns:core="sap.ui.core" key="all"         text="All Statuses"/>
+              <core:Item xmlns:core="sap.ui.core" key="scheduled"   text="Scheduled"/>
+              <core:Item xmlns:core="sap.ui.core" key="completed"   text="Completed"/>
+              <core:Item xmlns:core="sap.ui.core" key="cancelled"   text="Cancelled"/>
+              <core:Item xmlns:core="sap.ui.core" key="no-show"     text="No Show"/>
+              <core:Item xmlns:core="sap.ui.core" key="rescheduled" text="Rescheduled"/>
+            </items>
+          </Select>
+        </contentLeft>
+      </Bar>
+    </subHeader>
+
+    <content>
+      <Table
+        id="appointmentsTable"
+        items="{
+          path: '/Appointments',
+          parameters: {
+            $orderby: 'scheduledDate desc',
+            $expand : 'patient,doctor'
+          }
+        }"
+        growing="true"
+        growingThreshold="25"
+        noDataText="No appointments found.">
+
+        <headerToolbar>
+          <OverflowToolbar>
+            <Title text="Appointment List" level="H3"/>
+            <ToolbarSpacer/>
+          </OverflowToolbar>
+        </headerToolbar>
+
+        <columns>
+          <Column width="14rem">
+            <Text text="Date &amp; Time"/>
+          </Column>
+          <Column>
+            <Text text="Patient"/>
+          </Column>
+          <Column minScreenWidth="Tablet" demandPopin="true">
+            <Text text="Doctor"/>
+          </Column>
+          <Column width="9rem" minScreenWidth="Tablet" demandPopin="true">
+            <Text text="Type"/>
+          </Column>
+          <Column width="6rem" minScreenWidth="Tablet" demandPopin="true">
+            <Text text="Duration"/>
+          </Column>
+          <Column width="8rem">
+            <Text text="Status"/>
+          </Column>
+          <Column width="10rem" hAlign="Center">
+            <Text text="Actions"/>
+          </Column>
+        </columns>
+
+        <items>
+          <ColumnListItem type="Inactive">
+            <cells>
+              <Text text="{
+                path: 'scheduledDate',
+                formatter: '.formatDate'
+              }"/>
+              <VBox>
+                <Text text="{= ${patient/firstName} + ' ' + ${patient/lastName}}" wrapping="false"/>
+                <Text text="{patient/email}" class="sapUiTinyMarginTop" style="color:#6B7280;font-size:0.8rem;"/>
+              </VBox>
+              <VBox>
+                <Text text="{= 'Dr. ' + ${doctor/firstName} + ' ' + ${doctor/lastName}}" wrapping="false"/>
+                <Text text="{doctor/specialization}" class="sapUiTinyMarginTop" style="color:#6B7280;font-size:0.8rem;"/>
+              </VBox>
+              <Text text="{appointmentType}"/>
+              <Text text="{= ${duration} + ' min'}"/>
+              <ObjectStatus
+                text="{path: 'status', formatter: '.formatStatus'}"
+                state="{path: 'status', formatter: '.formatStatusState'}"/>
+              <HBox>
+                <Button
+                  icon="sap-icon://accept"
+                  tooltip="Complete"
+                  type="Transparent"
+                  visible="{= ${status} === 'scheduled' || ${status} === 'rescheduled'}"
+                  press="onCompleteAppointment"/>
+                <Button
+                  icon="sap-icon://cancel"
+                  tooltip="Cancel"
+                  type="Transparent"
+                  visible="{= ${status} === 'scheduled' || ${status} === 'rescheduled'}"
+                  press="onCancelAppointment"/>
+              </HBox>
+            </cells>
+          </ColumnListItem>
+        </items>
+
+      </Table>
+    </content>
+  </Page>
+</mvc:View>

@@ -1,0 +1,17 @@
+itemCode,group_groupCode,examCode
+MI-CT-01,mg-ct-q2,CT-CHEST-C
+MI-CT-02,mg-ct-q2,CT-ABD-NC
+MI-CT-03,mg-ct-q2,CT-HEAD-NC
+MI-CT-04,mg-ct-q2,CT-SPINE-L
+MI-MRI-01,mg-mri-prem,MRI-BRAIN-C
+MI-MRI-02,mg-mri-prem,MRI-KNEE-R
+MI-MRI-03,mg-mri-prem,MRI-SPINE-C
+MI-MRI-04,mg-mri-prem,MRI-ABD-C
+MI-XR-01,mg-xr-out,XR-CHEST-PA
+MI-XR-02,mg-xr-out,XR-KNEE-AP
+MI-XR-03,mg-xr-out,XR-HAND-R
+MI-US-01,mg-us-womens,US-ABD-FULL
+MI-US-02,mg-us-womens,US-PELVIC-T
+MI-US-03,mg-us-womens,US-THYR
+MI-PET-01,mg-pet-onc,PET-ONCO
+MI-MG-01,mg-mg-screen,MG-BILAT

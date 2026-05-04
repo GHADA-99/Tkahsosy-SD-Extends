@@ -1,0 +1,135 @@
+<mvc:View
+  controllerName="medsync.patients.controller.Patients"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:l="sap.ui.layout"
+  displayBlock="true">
+
+  <Page
+    id="patientsPage"
+    title="Patients"
+    class="sapUiContentPadding"
+    showNavButton="false">
+
+    <headerContent>
+      <Button
+        icon="sap-icon://add"
+        text="Create Patient"
+        type="Emphasized"
+        press="onCreatePatient"/>
+      <Button
+        icon="sap-icon://refresh"
+        tooltip="Refresh"
+        press="onRefresh"/>
+    </headerContent>
+
+    <subHeader>
+      <Bar>
+        <contentLeft>
+          <SearchField
+            id="searchField"
+            placeholder="Search by name or email…"
+            width="340px"
+            search="onSearch"
+            liveChange="onSearch"/>
+          <CheckBox
+            text="Active only"
+            selected="true"
+            select="onFilterActive"
+            class="sapUiSmallMarginBegin"/>
+        </contentLeft>
+        <contentRight>
+          <Text text="{view>/totalCount} patients" class="sapUiSmallMarginEnd"/>
+        </contentRight>
+      </Bar>
+    </subHeader>
+
+    <content>
+      <Table
+        id="patientsTable"
+        items="{
+          path: '/Patients',
+          parameters: {
+            $orderby: 'lastName,firstName',
+            $filter: 'isActive eq true'
+          }
+        }"
+        growing="true"
+        growingThreshold="20"
+        noDataText="No patients found. Use the search field or create a new patient."
+        mode="None">
+
+        <headerToolbar>
+          <OverflowToolbar>
+            <Title text="Patient List" level="H3"/>
+            <ToolbarSpacer/>
+          </OverflowToolbar>
+        </headerToolbar>
+
+        <columns>
+          <Column width="12rem">
+            <Text text="Name"/>
+          </Column>
+          <Column width="8rem" minScreenWidth="Tablet" demandPopin="true">
+            <Text text="Date of Birth"/>
+          </Column>
+          <Column width="7rem" minScreenWidth="Tablet" demandPopin="true">
+            <Text text="Gender"/>
+          </Column>
+          <Column minScreenWidth="Desktop" demandPopin="true">
+            <Text text="Email"/>
+          </Column>
+          <Column width="10rem" minScreenWidth="Tablet" demandPopin="true">
+            <Text text="Phone"/>
+          </Column>
+          <Column width="6rem" hAlign="Center">
+            <Text text="Status"/>
+          </Column>
+          <Column width="8rem" hAlign="Center">
+            <Text text="Actions"/>
+          </Column>
+        </columns>
+
+        <items>
+          <ColumnListItem
+            type="Navigation"
+            press="onPatientPress">
+            <cells>
+              <VBox>
+                <ObjectIdentifier
+                  title="{= ${lastName} + ', ' + ${firstName}}"
+                  text="{ID}"/>
+              </VBox>
+              <Text text="{
+                path: 'dateOfBirth',
+                formatter: '.formatter.formatDate'
+              }"/>
+              <Text text="{
+                path: 'gender',
+                formatter: '.formatter.formatGender'
+              }"/>
+              <Link text="{email}" href="mailto:{email}"/>
+              <Text text="{phone}"/>
+              <ObjectStatus
+                text="{= ${isActive} ? 'Active' : 'Inactive'}"
+                state="{= ${isActive} ? 'Success' : 'Error'}"/>
+              <HBox>
+                <Button
+                  icon="sap-icon://edit"
+                  tooltip="Edit"
+                  type="Transparent"
+                  press="onPatientPress"/>
+                <Button
+                  icon="sap-icon://delete"
+                  tooltip="Deactivate"
+                  type="Transparent"
+                  press="onDeletePatient"/>
+              </HBox>
+            </cells>
+          </ColumnListItem>
+        </items>
+
+      </Table>
+    </content>
+  </Page>
+</mvc:View>

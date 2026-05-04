@@ -1,0 +1,42 @@
+/* MedSync Appointments App – Custom Styles */
+
+:root {
+  --ms-primary  : #0066CC;
+  --ms-accent   : #00A3E0;
+  --ms-success  : #107E3E;
+  --ms-warning  : #E9730C;
+  --ms-error    : #BB0000;
+  --ms-info     : #0070F2;
+}
+
+.sapMPage > .sapMPageHeader {
+  background-color: #00A3E0 !important;
+  color: #ffffff !important;
+}
+
+/* Status badge colours */
+.msApptScheduled   { background: #E6F0FB; color: var(--ms-info); }
+.msApptCompleted   { background: #E8F5E9; color: var(--ms-success); }
+.msApptCancelled   { background: #FFEBEE; color: var(--ms-error); }
+.msApptNoShow      { background: #FFF3E0; color: var(--ms-warning); }
+.msApptRescheduled { background: #FFF8E1; color: var(--ms-warning); }
+
+/* Calendar view styles */
+.msCalendarCell {
+  min-height   : 80px;
+  border       : 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding      : 4px 6px;
+}
+
+.msCalendarCell:hover {
+  background: #f0f6ff;
+  cursor     : pointer;
+}
+
+/* Filter bar */
+.msFilterBar {
+  background   : #f5f7fa;
+  border-bottom: 1px solid #d8dce3;
+  padding      : 0.5rem 1rem;
+}

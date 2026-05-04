@@ -1,0 +1,11 @@
+ID,patient_ID,doctor_ID,scheduledDate,duration,status,appointmentType,notes,reminderSent,isDeleted
+c3d4e5f6-a7b8-9012-cdef-123456789001,a1b2c3d4-e5f6-7890-abcd-ef1234567801,b2c3d4e5-f6a7-8901-bcde-f12345678901,2026-05-10T09:00:00,30,scheduled,consultation,Annual cardiac checkup,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789002,a1b2c3d4-e5f6-7890-abcd-ef1234567802,b2c3d4e5-f6a7-8901-bcde-f12345678904,2026-05-10T10:00:00,45,scheduled,follow-up,Diabetes management review,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789003,a1b2c3d4-e5f6-7890-abcd-ef1234567803,b2c3d4e5-f6a7-8901-bcde-f12345678901,2026-05-11T09:30:00,60,scheduled,consultation,Coronary artery disease follow-up,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789004,a1b2c3d4-e5f6-7890-abcd-ef1234567804,b2c3d4e5-f6a7-8901-bcde-f12345678904,2026-05-11T11:00:00,30,scheduled,checkup,Thyroid function review,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789005,a1b2c3d4-e5f6-7890-abcd-ef1234567805,b2c3d4e5-f6a7-8901-bcde-f12345678905,2026-05-12T14:00:00,45,scheduled,follow-up,COPD management and medication review,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789006,a1b2c3d4-e5f6-7890-abcd-ef1234567806,b2c3d4e5-f6a7-8901-bcde-f12345678902,2026-05-12T15:00:00,30,scheduled,consultation,Neurological assessment for RA complications,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789007,a1b2c3d4-e5f6-7890-abcd-ef1234567807,b2c3d4e5-f6a7-8901-bcde-f12345678905,2026-05-13T09:00:00,60,scheduled,follow-up,Kidney function review and anemia management,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789008,a1b2c3d4-e5f6-7890-abcd-ef1234567808,b2c3d4e5-f6a7-8901-bcde-f12345678902,2026-05-13T10:30:00,30,scheduled,consultation,Migraine treatment plan,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789009,a1b2c3d4-e5f6-7890-abcd-ef1234567809,b2c3d4e5-f6a7-8901-bcde-f12345678905,2026-05-14T13:00:00,30,scheduled,checkup,Annual physical and GERD management,false,false
+c3d4e5f6-a7b8-9012-cdef-123456789010,a1b2c3d4-e5f6-7890-abcd-ef1234567810,b2c3d4e5-f6a7-8901-bcde-f12345678902,2026-05-14T14:30:00,45,scheduled,follow-up,Fibromyalgia and depression treatment review,false,false

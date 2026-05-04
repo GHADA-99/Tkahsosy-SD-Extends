@@ -1,0 +1,26 @@
+{
+  "requires": {
+    "auth": {
+      "kind": "mocked",
+      "restrict_all_services": false,
+      "users": {
+        "admin": {
+          "password": "admin",
+          "roles": ["admin", "doctor", "patient"]
+        },
+        "doctor1": {
+          "password": "doctor",
+          "roles": ["doctor", "patient"]
+        },
+        "patient1": {
+          "password": "patient",
+          "roles": ["patient"]
+        },
+        "alice": {
+          "roles": ["admin", "doctor", "patient"]
+        },
+        "*": true
+      }
+    }
+  }
+}

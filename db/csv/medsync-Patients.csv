@@ -1,0 +1,11 @@
+ID,firstName,lastName,dateOfBirth,gender,email,phone,street,city,state,zip,country,medicalHistory,allergies,isActive
+a1b2c3d4-e5f6-7890-abcd-ef1234567801,John,Smith,1975-03-15,male,john.smith@email.com,+1-555-0101,123 Maple Street,Boston,MA,02101,USA,Hypertension diagnosed 2018,Penicillin,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567802,Maria,Garcia,1982-07-22,female,maria.garcia@email.com,+1-555-0102,456 Oak Avenue,Los Angeles,CA,90001,USA,Type 2 Diabetes diagnosed 2020,Sulfa drugs,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567803,Robert,Johnson,1968-11-30,male,robert.johnson@email.com,+1-555-0103,789 Pine Road,Chicago,IL,60601,USA,Asthma since childhood; Coronary artery disease 2019,Aspirin; NSAIDs,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567804,Emily,Davis,1990-05-14,female,emily.davis@email.com,+1-555-0104,321 Elm Street,Houston,TX,77001,USA,Hypothyroidism,Latex,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567805,Michael,Wilson,1955-09-08,male,michael.wilson@email.com,+1-555-0105,654 Birch Lane,Phoenix,AZ,85001,USA,COPD; Hypertension; Hyperlipidemia,Codeine,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567806,Sarah,Martinez,1978-12-20,female,sarah.martinez@email.com,+1-555-0106,987 Cedar Drive,Philadelphia,PA,19101,USA,Rheumatoid Arthritis diagnosed 2015,Methotrexate,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567807,David,Anderson,1962-04-03,male,david.anderson@email.com,+1-555-0107,147 Walnut Court,San Antonio,TX,78201,USA,Chronic kidney disease stage 3; Anemia,Iodine contrast,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567808,Jennifer,Taylor,1995-08-17,female,jennifer.taylor@email.com,+1-555-0108,258 Spruce Way,San Diego,CA,92101,USA,Migraine disorder,None known,true
+a1b2c3d4-e5f6-7890-abcd-ef1234567809,Christopher,Lee,1987-01-25,male,christopher.lee@email.com,+1-555-0109,369 Poplar Blvd,Dallas,TX,75201,USA,Anxiety disorder; GERD,Shellfish (food allergy),true
+a1b2c3d4-e5f6-7890-abcd-ef1234567810,Amanda,Brown,1971-06-09,female,amanda.brown@email.com,+1-555-0110,741 Willow Street,San Jose,CA,95101,USA,Fibromyalgia; Depression,Morphine,true

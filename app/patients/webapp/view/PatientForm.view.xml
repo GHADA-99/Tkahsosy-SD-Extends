@@ -1,0 +1,147 @@
+<mvc:View
+  controllerName="medsync.patients.controller.PatientForm"
+  xmlns:mvc="sap.ui.core.mvc"
+  xmlns="sap.m"
+  xmlns:l="sap.ui.layout"
+  xmlns:f="sap.ui.layout.form"
+  displayBlock="true">
+
+  <Page
+    id="patientFormPage"
+    title="New Patient"
+    showNavButton="true"
+    navButtonPress="onNavBack">
+
+    <headerContent>
+      <Button
+        text="Save"
+        type="Emphasized"
+        icon="sap-icon://save"
+        press="onSave"/>
+      <Button
+        text="Cancel"
+        icon="sap-icon://decline"
+        press="onCancel"/>
+    </headerContent>
+
+    <content>
+      <BusyIndicator visible="{view>/busy}" size="Large" class="sapUiLargeMargin"/>
+
+      <!-- Personal Information -->
+      <Panel headerText="Personal Information" class="sapUiSmallMargin" expandable="false">
+        <f:SimpleForm
+          layout="ColumnLayout"
+          editable="true"
+          columnsL="2"
+          columnsM="2"
+          columnsXL="3">
+          <f:content>
+            <Label text="First Name" required="true"/>
+            <Input
+              value="{form>/firstName}"
+              placeholder="Enter first name"
+              maxLength="100"/>
+
+            <Label text="Last Name" required="true"/>
+            <Input
+              value="{form>/lastName}"
+              placeholder="Enter last name"
+              maxLength="100"/>
+
+            <Label text="Date of Birth"/>
+            <DatePicker
+              value="{form>/dateOfBirth}"
+              valueFormat="yyyy-MM-dd"
+              displayFormat="MMM d, yyyy"
+              placeholder="Select date of birth"/>
+
+            <Label text="Gender"/>
+            <Select selectedKey="{form>/gender}">
+              <items>
+                <core:Item xmlns:core="sap.ui.core" key="unspecified" text="Unspecified"/>
+                <core:Item xmlns:core="sap.ui.core" key="male"        text="Male"/>
+                <core:Item xmlns:core="sap.ui.core" key="female"      text="Female"/>
+                <core:Item xmlns:core="sap.ui.core" key="other"       text="Other"/>
+              </items>
+            </Select>
+          </f:content>
+        </f:SimpleForm>
+      </Panel>
+
+      <!-- Contact Information -->
+      <Panel headerText="Contact Information" class="sapUiSmallMargin" expandable="false">
+        <f:SimpleForm
+          layout="ColumnLayout"
+          editable="true"
+          columnsL="2"
+          columnsM="2"
+          columnsXL="3">
+          <f:content>
+            <Label text="Email" required="true"/>
+            <Input
+              value="{form>/email}"
+              placeholder="patient@example.com"
+              type="Email"
+              maxLength="255"/>
+
+            <Label text="Phone"/>
+            <Input
+              value="{form>/phone}"
+              placeholder="+1-555-0100"
+              type="Tel"
+              maxLength="30"/>
+          </f:content>
+        </f:SimpleForm>
+      </Panel>
+
+      <!-- Address -->
+      <Panel headerText="Address" class="sapUiSmallMargin" expandable="true" expanded="false">
+        <f:SimpleForm
+          layout="ColumnLayout"
+          editable="true"
+          columnsL="2"
+          columnsM="2"
+          columnsXL="3">
+          <f:content>
+            <Label text="Street"/>
+            <Input value="{form>/street}" placeholder="Street address" maxLength="255"/>
+
+            <Label text="City"/>
+            <Input value="{form>/city}" placeholder="City" maxLength="100"/>
+
+            <Label text="State / Province"/>
+            <Input value="{form>/state}" placeholder="State" maxLength="100"/>
+
+            <Label text="ZIP / Postal Code"/>
+            <Input value="{form>/zip}" placeholder="ZIP code" maxLength="20"/>
+
+            <Label text="Country"/>
+            <Input value="{form>/country}" placeholder="Country" maxLength="100"/>
+          </f:content>
+        </f:SimpleForm>
+      </Panel>
+
+      <!-- Medical Information -->
+      <Panel headerText="Medical Information" class="sapUiSmallMargin" expandable="true" expanded="false">
+        <f:SimpleForm layout="ColumnLayout" editable="true">
+          <f:content>
+            <Label text="Medical History"/>
+            <TextArea
+              value="{form>/medicalHistory}"
+              rows="4"
+              growing="true"
+              placeholder="Relevant medical history, chronic conditions…"
+              maxLength="5000"/>
+
+            <Label text="Known Allergies"/>
+            <Input
+              value="{form>/allergies}"
+              placeholder="e.g. Penicillin, Latex"
+              maxLength="500"/>
+          </f:content>
+        </f:SimpleForm>
+      </Panel>
+
+    </content>
+  </Page>
+</mvc:View>

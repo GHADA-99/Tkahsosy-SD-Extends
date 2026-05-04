@@ -1,0 +1,61 @@
+{
+  "_version": "1.60.0",
+  "sap.app": {
+    "id"         : "medsync.admin",
+    "type"       : "application",
+    "title"      : "MedSync Administration",
+    "description": "Administration panel for MedSync",
+    "applicationVersion": { "version": "1.0.0" },
+    "dataSources": {
+      "mainService": {
+        "uri" : "/api/",
+        "type": "OData",
+        "settings": { "odataVersion": "4.0" }
+      }
+    }
+  },
+  "sap.ui": {
+    "technology": "UI5",
+    "deviceTypes": { "desktop": true, "tablet": true, "phone": false }
+  },
+  "sap.ui5": {
+    "rootView": {
+      "viewName": "medsync.admin.view.Admin",
+      "type"    : "XML",
+      "async"   : true,
+      "id"      : "app"
+    },
+    "dependencies": {
+      "minUI5Version": "1.120.0",
+      "libs": { "sap.m": {}, "sap.ui.layout": {} }
+    },
+    "contentDensities": { "compact": true, "cozy": false },
+    "models": {
+      "": {
+        "dataSource": "mainService",
+        "preload"   : true,
+        "settings": {
+          "synchronizationMode": "None",
+          "operationMode"      : "Server",
+          "autoExpandSelect"   : true
+        }
+      }
+    },
+    "routing": {
+      "config": {
+        "routerClass"       : "sap.m.routing.Router",
+        "viewType"          : "XML",
+        "viewPath"          : "medsync.admin.view",
+        "controlId"         : "app",
+        "controlAggregation": "pages",
+        "async"             : true
+      },
+      "routes": [
+        { "name": "Admin", "pattern": "", "target": "Admin" }
+      ],
+      "targets": {
+        "Admin": { "viewName": "Admin", "viewId": "Admin" }
+      }
+    }
+  }
+}
