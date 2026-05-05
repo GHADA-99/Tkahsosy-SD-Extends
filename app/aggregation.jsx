@@ -1,5 +1,5 @@
 // Object 3: Monthly Aggregation → One Service Order per Month
-function Aggregation({ transactions, onToast, readOnly }) {
+function Aggregation({ transactions, onToast, readOnly, groups: modGroups = [], onUpdateGroup = () => {} }) {
   const currentMonth  = useMemo(() => new Date(), []);
   const monthly       = useMemo(
     () => transactions.filter(t => sameMonth(t.date, currentMonth)),
@@ -19,6 +19,16 @@ function Aggregation({ transactions, onToast, readOnly }) {
   const [openId,      setOpenId]      = useState(null);
   const [monthOrder,  setMonthOrder]  = useState(null);   // { id, erpId } once created
   const [generating,  setGenerating]  = useState(false);
+  const [editingCode, setEditingCode] = useState(null);
+  const [draft,       setDraft]       = useState('');
+  const [localQtyMap, setLocalQtyMap] = useState({});
+
+  const commitQty = (modalityGroup) => {
+    const n = Math.max(0, Math.min(modalityGroup.qtyOrig, parseInt(draft || 0, 10) || 0));
+    setLocalQtyMap(m => ({ ...m, [modalityGroup.id]: n }));
+    onUpdateGroup({ ...modalityGroup, qtyUpdated: n, finished: n >= modalityGroup.qtyOrig ? true : modalityGroup.finished });
+    setEditingCode(null);
+  };
 
   const monthLabel  = currentMonth.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   const totalTx     = monthly.length;
@@ -197,6 +207,10 @@ function Aggregation({ transactions, onToast, readOnly }) {
         {groups.map(g => {
           const open  = openId === g.code;
           const total = g.items.reduce((a, x) => a + x.price, 0);
+          const hasMultipleCases = g.items.length > 1;
+          const modalityGroup = hasMultipleCases
+            ? modGroups.find(mg => mg.items.some(item => item.code === g.code))
+            : null;
           return (
             <div key={g.code} className="agg-group" data-open={open}>
               <button
@@ -237,6 +251,39 @@ function Aggregation({ transactions, onToast, readOnly }) {
 
               {open && (
                 <div className="agg-group-body">
+                  {modalityGroup && (
+                    <div className="qty-row" style={{marginBottom: 8}}>
+                      <div className="qty-tile">
+                        <div className="lbl">Original qty</div>
+                        <div className="val">{modalityGroup.qtyOrig}</div>
+                      </div>
+                      <div
+                        className={"qty-tile" + (editingCode === g.code ? ' editable' : '')}
+                        onClick={() => { if (!readOnly) { setEditingCode(g.code); setDraft(''); } }}
+                      >
+                        <div className="lbl" style={{display: 'flex', alignItems: 'center', gap: 4}}>
+                          Updated qty {!readOnly && <I.Edit size={10} style={{opacity: .6}}/>}
+                        </div>
+                        {editingCode === g.code ? (
+                          <input
+                            autoFocus
+                            type="number" min={0} max={modalityGroup.qtyOrig}
+                            value={draft}
+                            onChange={e => setDraft(e.target.value)}
+                            onBlur={() => commitQty(modalityGroup)}
+                            onKeyDown={e => {
+                              if (e.key === 'Enter') commitQty(modalityGroup);
+                              if (e.key === 'Escape') setEditingCode(null);
+                            }}
+                          />
+                        ) : (
+                          <div className="val" style={!(modalityGroup.id in localQtyMap) ? {color: 'var(--muted)', fontWeight: 400} : {}}>
+                            {modalityGroup.id in localQtyMap ? localQtyMap[modalityGroup.id] : '—'}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                   <div className="agg-txn-list">
                     {g.items.map(t => (
                       <div key={t.id} className="agg-txn">

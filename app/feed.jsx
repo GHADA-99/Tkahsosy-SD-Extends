@@ -14,9 +14,10 @@ function fmtDMY(d) {
   return `${dd}-${mm}-${d.getFullYear()}`;
 }
 
-function TransactionFeed({ transactions, filters, setFilters, liveSync, showArabic }) {
+function TransactionFeed({ transactions, filters, setFilters, liveSync, showArabic, onImport = () => {}, onToast = () => {} }) {
   const [page, setPage] = useState(1);
   const pageSize = 8;
+  const fileInputRef = useRef(null);
 
   const filtered = useMemo(() => {
     return transactions.filter(t => {
@@ -37,6 +38,55 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const modChips = ['all', ...MODALITIES.map(m => m.code)];
+
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const buffer = await file.arrayBuffer();
+    const wb = XLSX.read(buffer, { type: 'array' });
+    const ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws);
+
+    const existingIds = new Set(transactions.map(t => t.id));
+    const newRows = rows.filter(r => r['Transaction ID'] && !existingIds.has(String(r['Transaction ID'])));
+
+    if (newRows.length === 0) {
+      onToast('No new transactions found in file');
+      return;
+    }
+
+    let saved = 0;
+    const imported = [];
+    for (const r of newRows) {
+      const parts = String(r['Date'] || '').split('-');
+      const txDate = parts.length === 3
+        ? new Date(+parts[2], +parts[1] - 1, +parts[0])
+        : new Date();
+      const payload = {
+        transactionId  : String(r['Transaction ID']),
+        examCode       : String(r['Exam Code']          || ''),
+        examNameEn     : String(r['Description (EN)']   || ''),
+        examNameAr     : String(r['Description (AR)']   || ''),
+        modality       : String(r['Modality']           || ''),
+        price          : Number(r['Price (SAR)'])        || 0,
+        transactionDate: txDate.toISOString(),
+      };
+      try {
+        const res = await fetch('/api/Transactions', {
+          method : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body   : JSON.stringify(payload),
+        });
+        if (res.ok) saved++;
+      } catch (_) {}
+      imported.push({ id: payload.transactionId, code: payload.examCode, en: payload.examNameEn, ar: payload.examNameAr, mod: payload.modality, price: payload.price, date: txDate, isNew: true });
+    }
+
+    onImport(imported);
+    onToast(`Imported ${newRows.length} transaction${newRows.length !== 1 ? 's' : ''}${saved < newRows.length ? ` (${newRows.length - saved} failed to save)` : ''}`);
+  };
 
   const exportToExcel = () => {
     const rows = filtered.map(t => ({
@@ -82,6 +132,10 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
           <option value="all">All time</option>
         </select>
 
+        <button className="btn sm" onClick={() => fileInputRef.current.click()} style={{display: 'inline-flex', alignItems: 'center', gap: 5}}>
+          <I.Upload size={13}/> Import
+        </button>
+        <input ref={fileInputRef} type="file" accept=".xlsx,.xls" style={{display: 'none'}} onChange={handleImport}/>
         <button className="btn sm" onClick={exportToExcel} style={{display: 'inline-flex', alignItems: 'center', gap: 5}}>
           <I.Download size={13}/> Export
         </button>

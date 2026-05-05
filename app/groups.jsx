@@ -197,29 +197,6 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
         </div>
       </div>
 
-      <div className="qty-row">
-        <div className="qty-tile">
-          <div className="lbl">Original qty</div>
-          <div className="val">{group.qtyOrig}</div>
-        </div>
-        <div className={"qty-tile" + (editing ? ' editable' : '')} onClick={() => setEditing(true)}>
-          <div className="lbl" style={{display: 'flex', alignItems: 'center', gap: 4}}>
-            Updated qty <I.Edit size={10} style={{opacity: .6}}/>
-          </div>
-          {editing ? (
-            <input autoFocus type="number" min={0} max={group.qtyOrig} value={draft}
-                   onChange={e => setDraft(e.target.value)}
-                   onBlur={commit}
-                   onKeyDown={e => { if (e.key === 'Enter') commit(); if (e.key === 'Escape') { setDraft(group.qtyUpdated); setEditing(false); } }}/>
-          ) : (
-            <div className="val">
-              {group.qtyUpdated}
-              <span className="delta">+{group.qtyUpdated - Math.floor(group.qtyOrig * 0.3)}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
       {!readOnly && (
         <div style={{position: 'relative', marginBottom: 16, marginTop: 16}}>
           <span style={{position: 'absolute', right: 0, top: -16, fontSize: 11, color: 'var(--muted)', fontVariantNumeric: 'tabular-nums'}}>{pct}%</span>

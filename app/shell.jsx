@@ -74,7 +74,7 @@ function Sidebar({ current, onNav, counts }) {
   );
 }
 
-function PageHeader({ title, subtitle, tab, onTab, notifCount, liveCount, onExport }) {
+function PageHeader({ title, subtitle, tab, onTab, notifCount, liveCount, onExport, onCalculateDiscount }) {
   return (
     <div className="page-head">
       {tab !== 'groups' && tab !== 'monthly' && <div className="page-title">
@@ -98,6 +98,11 @@ function PageHeader({ title, subtitle, tab, onTab, notifCount, liveCount, onExpo
           </button>
         ))}
       </div>}
+      {tab === 'monthly' && (
+        <button className="btn primary sm" onClick={onCalculateDiscount} style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
+          <I.Zap size={14}/> Calculate Discount
+        </button>
+      )}
       <button className="btn" onClick={onExport}><I.Download size={14}/> Export</button>
     </div>
   );

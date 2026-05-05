@@ -161,22 +161,25 @@ function App() {
       <Sidebar current={nav} onNav={(id) => {
           setNav(id);
           setNewCount(0);
-          const navToTab = { dashboard: 'all', transactions: 'feed', groups: 'groups', orders: 'monthly' };
+          const navToTab = { dashboard: 'all', transactions: 'feed', groups: 'groups', orders: 'monthly', reports: 'reports' };
           if (navToTab[id]) setTab(navToTab[id]);
         }} counts={counts}/>
 
       <div className={mainClass}>
-        {tab !== 'feed' && (
+        {tab !== 'feed' && tab !== 'reports' && (
           <PageHeader
             title="Radiology Operations"
             subtitle="Live from PACS-Gateway · Central Imaging Dept · Apr 22, 2026"
             tab={tab} onTab={setTab}
             notifCount={newCount}
             liveCount={tab === 'feed' ? 0 : newCount}
-            onExport={handleExport}/>
+            onExport={handleExport}
+            onCalculateDiscount={() => showToast('Discount calculated')}/>
         )}
 
-        {tab !== 'groups' && tab !== 'feed' && tab !== 'monthly' && <KpiStrip tx={transactions} groups={groups}/>}
+        {tab !== 'groups' && tab !== 'feed' && tab !== 'monthly' && tab !== 'reports' && <KpiStrip tx={transactions} groups={groups}/>}
+
+        {tab === 'reports' && <div style={{flex: 1}}/>}
 
         {(tab === 'all' || tab === 'feed') && (
           <div style={{marginBottom: tab === 'all' ? 16 : 0}}>
@@ -184,14 +187,16 @@ function App() {
               transactions={transactions}
               filters={filters} setFilters={setFilters}
               liveSync={tweaks.liveSync}
-              showArabic={tweaks.showArabic}/>
+              showArabic={tweaks.showArabic}
+              onImport={(newTxs) => setTransactions(prev => [...newTxs, ...prev])}
+              onToast={showToast}/>
           </div>
         )}
 
         {(tab === 'all' || tab === 'groups' || tab === 'monthly') && (
           <div className={tab === 'all' ? 'panels' : ''} style={tab === 'all' ? {} : {}}>
             {(tab === 'all' || tab === 'monthly') && (
-              <Aggregation transactions={transactions} onToast={showToast} readOnly={tab === 'all'}/>
+              <Aggregation transactions={transactions} onToast={showToast} readOnly={tab === 'all'} groups={groups} onUpdateGroup={(g) => setGroups(gs => gs.map(x => x.id === g.id ? g : x))}/>
             )}
             {(tab === 'all' || tab === 'groups') && (
               <div style={tab === 'all' ? {} : {marginTop: 0}}>
