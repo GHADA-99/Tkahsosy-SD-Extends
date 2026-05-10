@@ -41,8 +41,9 @@ function Sidebar({ current, onNav, counts }) {
     { id: 'dashboard',    label: 'Dashboard',       icon: I.Home },
     { id: 'transactions', label: 'Transactions',    icon: I.Activity, count: counts.tx },
     { id: 'groups',       label: 'Modality Groups', icon: I.Layers,   count: counts.groups },
-    { id: 'orders',       label: 'Service Orders',  icon: I.Clipboard, count: counts.orders },
-    { id: 'reports',      label: 'Reports',         icon: I.BarChart },
+    { id: 'orders',       label: 'Service Orders',    icon: I.Clipboard, count: counts.orders },
+    { id: 'ordersV2',    label: 'Service Orders V2', icon: I.Clipboard, count: counts.ordersV2 },
+    { id: 'reports',      label: 'Reports',          icon: I.BarChart },
   ];
   const secondary = [
     { id: 'team',     label: 'Team',     icon: I.Users },

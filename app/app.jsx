@@ -23,6 +23,46 @@ function App() {
       .catch(() => {});
   }, []);
   const [groups, setGroups] = useState(MODALITY_GROUPS);
+
+  useEffect(() => {
+    Promise.all([
+      fetch('/api/ModalityGroups').then(r => r.json()),
+      fetch('/api/ModalityGroupItems').then(r => r.json()),
+    ]).then(([groupsData, itemsData]) => {
+      const itemsByGroup = {};
+      (itemsData.value || []).forEach(item => {
+        const gCode = item.group_groupCode;
+        if (!itemsByGroup[gCode]) itemsByGroup[gCode] = [];
+        itemsByGroup[gCode].push({ id: item.itemCode, code: item.examCode });
+      });
+      const fetched = (groupsData.value || []).map(g => ({
+        id                 : g.groupCode,
+        name               : g.name,
+        modality           : g.modality,
+        discount           : g.discount,
+        qtyOrig            : g.qtyOrig,
+        qtyUpdated         : g.qtyUpdated,
+        finished           : g.finished,
+        firstThreshVol     : g.firstThreshVol,
+        firstThreshDiscount: g.firstThreshDiscount,
+        secondThreshVol    : g.secondThreshVol,
+        secondThreshDiscount: g.secondThreshDiscount,
+        items              : itemsByGroup[g.groupCode] || [],
+      }));
+      if (fetched.length > 0) {
+        setGroups(fetched);
+        window.MODALITY_GROUPS = fetched;
+      }
+    }).catch(() => {});
+  }, []);
+  const [ordersV2Count, setOrdersV2Count] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/SalesOrdersV2?$count=true&$top=0')
+      .then(r => r.json())
+      .then(data => { if (typeof data['@odata.count'] === 'number') setOrdersV2Count(data['@odata.count']); })
+      .catch(() => {});
+  }, []);
   const [nav, setNav] = useState('dashboard');
   const [tab, setTab] = useState('all');
   const [filters, setFilters] = useState({ q: '', mod: 'all', range: 'all' });
@@ -144,6 +184,7 @@ function App() {
     tx: transactions.length,
     groups: groups.length,
     orders: 12,
+    ordersV2: ordersV2Count,
   };
 
   const mainClass = "main" + (tweaks.density === 'compact' ? ' compact' : '');
@@ -161,12 +202,12 @@ function App() {
       <Sidebar current={nav} onNav={(id) => {
           setNav(id);
           setNewCount(0);
-          const navToTab = { dashboard: 'all', transactions: 'feed', groups: 'groups', orders: 'monthly', reports: 'reports' };
+          const navToTab = { dashboard: 'all', transactions: 'feed', groups: 'groups', orders: 'monthly', ordersV2: 'ordersV2', reports: 'reports' };
           if (navToTab[id]) setTab(navToTab[id]);
         }} counts={counts}/>
 
       <div className={mainClass}>
-        {tab !== 'feed' && tab !== 'reports' && (
+        {tab !== 'feed' && tab !== 'reports' && tab !== 'ordersV2' && (
           <PageHeader
             title="Radiology Operations"
             subtitle="Live from PACS-Gateway · Central Imaging Dept · Apr 22, 2026"
@@ -177,9 +218,13 @@ function App() {
             onCalculateDiscount={() => showToast('Discount calculated')}/>
         )}
 
-        {tab !== 'groups' && tab !== 'feed' && tab !== 'monthly' && tab !== 'reports' && <KpiStrip tx={transactions} groups={groups}/>}
+        {tab !== 'groups' && tab !== 'feed' && tab !== 'monthly' && tab !== 'reports' && tab !== 'ordersV2' && <KpiStrip tx={transactions} groups={groups}/>}
 
         {tab === 'reports' && <div style={{flex: 1}}/>}
+
+        {tab === 'ordersV2' && (
+          <AggregationV2 onToast={showToast} onOrderSaved={() => setOrdersV2Count(c => c + 1)}/>
+        )}
 
         {(tab === 'all' || tab === 'feed') && (
           <div style={{marginBottom: tab === 'all' ? 16 : 0}}>

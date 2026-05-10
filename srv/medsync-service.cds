@@ -81,6 +81,10 @@ service MedSyncService {
   entity SalesOrders     as projection on medsync.SalesOrders;
   entity SalesOrderItems as projection on medsync.SalesOrderItems;
 
+  // ─── SalesOrders V2 ───────────────────────────────────────────────────────────
+  entity SalesOrdersV2     as projection on medsync.SalesOrdersV2;
+  entity SalesOrderItemsV2 as projection on medsync.SalesOrderItemsV2;
+
   // ─── Transactions ─────────────────────────────────────────────────────────────
   @Capabilities: {
     FilterRestrictions: { Filterable: true },

@@ -127,6 +127,28 @@ entity SalesOrderItems : managed {
       transactionDate : DateTime;
 }
 
+entity SalesOrdersV2 : managed {
+  key salesOrderId    : String(20)  not null;
+      erpSalesOrderId : String(50);
+      examCode        : String(50);
+      month           : String(20);
+      status          : String(50)  default 'draft';
+      totalAmount     : Integer     default 0;
+      items           : Association to many SalesOrderItemsV2 on items.salesOrder = $self;
+}
+
+entity SalesOrderItemsV2 : managed {
+  key itemId          : String(50)  not null;
+      salesOrder      : Association to SalesOrdersV2 not null;
+      transactionId   : String(20);
+      examCode        : String(50);
+      examNameEn      : String(200);
+      price           : Integer;
+      transactionDate : DateTime;
+      discountPct     : Integer     default 0;
+      discountedPrice : Integer     default 0;
+}
+
 entity ModalityGroups : managed {
   key groupCode            : String(50);
       name                 : String(200) not null;

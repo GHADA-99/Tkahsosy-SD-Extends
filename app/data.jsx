@@ -1,13 +1,10 @@
 // Seed data for MedSync
 
 const MODALITIES = [
-  { code: 'CT',  label: 'CT Scan',        full: 'Computed Tomography' },
-  { code: 'MRI', label: 'MRI',            full: 'Magnetic Resonance Imaging' },
-  { code: 'XR',  label: 'X-Ray',          full: 'Radiography' },
-  { code: 'US',  label: 'Ultrasound',     full: 'Ultrasonography' },
-  { code: 'PET', label: 'PET/CT',         full: 'Positron Emission Tomography' },
-  { code: 'NM',  label: 'Nuclear Med',    full: 'Nuclear Medicine' },
-  { code: 'MG',  label: 'Mammography',    full: 'Mammography' },
+  { code: 'CT',  label: 'CT Scan',    full: 'Computed Tomography' },
+  { code: 'MRI', label: 'MRI',        full: 'Magnetic Resonance Imaging' },
+  { code: 'XR',  label: 'X-Ray',      full: 'Radiography' },
+  { code: 'US',  label: 'Ultrasound', full: 'Ultrasonography' },
 ];
 
 const EXAM_SEED = [
@@ -64,7 +61,7 @@ function newTransactionAt(date, idx) {
 const MODALITY_GROUPS = [
   {
     id: 'mg-ct-q2', name: 'CT Scans — Q2 Contract', modality: 'CT', discount: 18, qtyOrig: 240, qtyUpdated: 214, finished: false,
-    firstThreshVol: 80, firstThreshDiscount: 12, secondThreshVol: 160, secondThreshDiscount: 18,
+    firstThreshVol: 3, firstThreshDiscount: 50, secondThreshVol: 160, secondThreshDiscount: 18,
     items: [
       { id: 'MI-CT-01', code: 'CT-CHEST-C' },
       { id: 'MI-CT-02', code: 'CT-ABD-NC'  },
@@ -74,7 +71,7 @@ const MODALITY_GROUPS = [
   },
   {
     id: 'mg-mri-prem', name: 'MRI Premium Bundle', modality: 'MRI', discount: 25, qtyOrig: 120, qtyUpdated: 120, finished: true,
-    firstThreshVol: 30, firstThreshDiscount: 18, secondThreshVol: 60, secondThreshDiscount: 25,
+    firstThreshVol: 4, firstThreshDiscount: 50, secondThreshVol: 8, secondThreshDiscount: 75,
     items: [
       { id: 'MI-MRI-01', code: 'MRI-BRAIN-C' },
       { id: 'MI-MRI-02', code: 'MRI-KNEE-R'  },
@@ -84,7 +81,7 @@ const MODALITY_GROUPS = [
   },
   {
     id: 'mg-xr-out', name: 'X-Ray Outpatient Block', modality: 'XR', discount: 12, qtyOrig: 500, qtyUpdated: 378, finished: false,
-    firstThreshVol: 150, firstThreshDiscount: 8, secondThreshVol: 300, secondThreshDiscount: 12,
+    firstThreshVol: 3, firstThreshDiscount: 50, secondThreshVol: 300, secondThreshDiscount: 12,
     items: [
       { id: 'MI-XR-01', code: 'XR-CHEST-PA' },
       { id: 'MI-XR-02', code: 'XR-KNEE-AP'  },
@@ -93,31 +90,35 @@ const MODALITY_GROUPS = [
   },
   {
     id: 'mg-us-womens', name: "Ultrasound — Women's Health", modality: 'US', discount: 15, qtyOrig: 180, qtyUpdated: 142, finished: false,
-    firstThreshVol: 50, firstThreshDiscount: 10, secondThreshVol: 100, secondThreshDiscount: 15,
+    firstThreshVol: 4, firstThreshDiscount: 50, secondThreshVol: 100, secondThreshDiscount: 15,
     items: [
       { id: 'MI-US-01', code: 'US-ABD-FULL' },
       { id: 'MI-US-02', code: 'US-PELVIC-T' },
       { id: 'MI-US-03', code: 'US-THYR'     },
     ],
   },
-  {
-    id: 'mg-pet-onc', name: 'PET/CT Oncology Program', modality: 'PET', discount: 30, qtyOrig: 48, qtyUpdated: 48, finished: true,
-    firstThreshVol: 15, firstThreshDiscount: 20, secondThreshVol: 30, secondThreshDiscount: 30,
-    items: [
-      { id: 'MI-PET-01', code: 'PET-ONCO' },
-    ],
-  },
-  {
-    id: 'mg-mg-screen', name: 'Mammography Screening Drive', modality: 'MG', discount: 20, qtyOrig: 320, qtyUpdated: 97, finished: false,
-    firstThreshVol: 100, firstThreshDiscount: 12, secondThreshVol: 200, secondThreshDiscount: 20,
-    items: [
-      { id: 'MI-MG-01', code: 'MG-BILAT' },
-    ],
-  },
 ];
+
+function buildMay2026Transactions(count = 28) {
+  const rows = [];
+  for (let i = 0; i < count; i++) {
+    const exam = EXAM_SEED[Math.floor(seedRand(i + 200) * EXAM_SEED.length)];
+    const day  = Math.floor(seedRand(i + 300) * 28) + 1;
+    const hour = Math.floor(seedRand(i + 400) * 14) + 7;
+    const d    = new Date(2026, 4, day, hour, 0); // May 2026 (month index 4)
+    rows.push({
+      id   : `TX-M5${String(10000 + i).padStart(5, '0')}`,
+      ...exam,
+      price: exam.price + Math.floor(seedRand(i + 500) * 50 - 25),
+      date : d,
+    });
+  }
+  return rows.sort((a, b) => b.date - a.date);
+}
 
 window.MODALITIES = MODALITIES;
 window.EXAM_SEED = EXAM_SEED;
 window.buildTransactions = buildTransactions;
 window.newTransactionAt = newTransactionAt;
+window.buildMay2026Transactions = buildMay2026Transactions;
 window.MODALITY_GROUPS = MODALITY_GROUPS;
