@@ -217,7 +217,7 @@ function DiscountSummaryCard({ rows, totalAmount, discountedTotal }) {
 }
 
 // ── Top-level orchestrator ────────────────────────────────────────────────────
-function AggregationV2({ onToast, onOrderSaved = () => {} }) {
+function AggregationV2({ onToast, onOrderSaved = () => {}, onOrderDeleted = () => {} }) {
   const [screen,        setScreen]        = useState('overview');
   const [ordersV2,      setOrdersV2]      = useState([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
@@ -251,6 +251,18 @@ function AggregationV2({ onToast, onOrderSaved = () => {} }) {
 
   const goBack = () => { setSelectedOrder(null); setScreen('overview'); };
 
+  const handleDeleteOrder = async (orderId) => {
+    const filter = encodeURIComponent(`salesOrder_salesOrderId eq '${orderId}'`);
+    const data = await fetch(`/api/SalesOrderItemsV2?$filter=${filter}`).then(r => r.json()).catch(() => ({ value: [] }));
+    await Promise.all((data.value || []).map(i =>
+      fetch(`/api/SalesOrderItemsV2('${i.itemId}')`, { method: 'DELETE' }).catch(() => {})
+    ));
+    await fetch(`/api/SalesOrdersV2('${orderId}')`, { method: 'DELETE' }).catch(() => {});
+    setOrdersV2(prev => prev.filter(o => o.salesOrderId !== orderId));
+    onOrderDeleted();
+    onToast(`Order ${orderId} deleted`);
+  };
+
   if (screen === 'view' && selectedOrder) {
     return <ServiceOrderV2View order={selectedOrder} onBack={goBack} onToast={onToast}/>;
   }
@@ -276,12 +288,23 @@ function AggregationV2({ onToast, onOrderSaved = () => {} }) {
       loading={loadingOrders}
       onCreateClick={() => setScreen('create')}
       onViewOrder={(order) => { setSelectedOrder(order); setScreen('view'); }}
+      onDeleteOrder={handleDeleteOrder}
     />
   );
 }
 
 // ── Overview screen ───────────────────────────────────────────────────────────
-function ServiceOrderV2Overview({ orders, loading, onCreateClick, onViewOrder }) {
+function ServiceOrderV2Overview({ orders, loading, onCreateClick, onViewOrder, onDeleteOrder }) {
+  const [confirmId,  setConfirmId]  = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+
+  const handleConfirmDelete = async (orderId) => {
+    setConfirmId(null);
+    setDeletingId(orderId);
+    await onDeleteOrder(orderId);
+    setDeletingId(null);
+  };
+
   return (
     <div className="card">
       <div className="agg-head">
@@ -310,7 +333,7 @@ function ServiceOrderV2Overview({ orders, loading, onCreateClick, onViewOrder })
               <th style={{width: 100}}>Month</th>
               <th style={{width: 110}}>Status</th>
               <th className="num" style={{width: 150}}>Total Amount</th>
-              <th style={{width: 60}}></th>
+              <th style={{width: 160}}></th>
             </tr>
           </thead>
           <tbody>
@@ -329,14 +352,44 @@ function ServiceOrderV2Overview({ orders, loading, onCreateClick, onViewOrder })
                   </span>
                 </td>
                 <td className="num"><span className="mono">﷼ {(o.totalAmount || 0).toLocaleString()}</span></td>
-                <td onClick={e => e.stopPropagation()} style={{textAlign: 'center'}}>
-                  <button
-                    className="btn sm"
-                    onClick={() => onViewOrder(o)}
-                    style={{display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0 10px'}}
-                  >
-                    Open <I.ChevronRight size={13}/>
-                  </button>
+                <td onClick={e => e.stopPropagation()} style={{textAlign: 'right'}}>
+                  {confirmId === o.salesOrderId ? (
+                    <span style={{display: 'inline-flex', alignItems: 'center', gap: 4}}>
+                      <button className="btn sm" onClick={() => setConfirmId(null)} style={{padding: '0 8px'}}>
+                        Cancel
+                      </button>
+                      <button
+                        className="btn sm"
+                        onClick={() => handleConfirmDelete(o.salesOrderId)}
+                        style={{display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0 8px',
+                          background: 'var(--rose)', borderColor: 'var(--rose)', color: 'white'}}
+                      >
+                        <I.Trash size={12}/> Confirm
+                      </button>
+                    </span>
+                  ) : (
+                    <span style={{display: 'inline-flex', alignItems: 'center', gap: 4}}>
+                      <button
+                        className="btn sm"
+                        onClick={() => onViewOrder(o)}
+                        style={{display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0 10px'}}
+                      >
+                        Open <I.ChevronRight size={13}/>
+                      </button>
+                      <button
+                        className="btn sm"
+                        onClick={() => setConfirmId(o.salesOrderId)}
+                        disabled={deletingId === o.salesOrderId}
+                        style={{display: 'inline-flex', alignItems: 'center', gap: 4, padding: '0 8px',
+                          color: deletingId === o.salesOrderId ? 'var(--muted)' : 'var(--rose)',
+                          borderColor: 'color-mix(in oklab, var(--rose) 30%, var(--border))'}}
+                      >
+                        {deletingId === o.salesOrderId
+                          ? <><span style={{width:6,height:6,borderRadius:'50%',background:'currentColor',display:'inline-block',opacity:.5}}/> Deleting…</>
+                          : <I.Trash size={13}/>}
+                      </button>
+                    </span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -478,12 +531,12 @@ function ModalityGroupList({ groupings, openId, setOpenId, discountApplied, disc
 
 // ── View screen (existing order) ──────────────────────────────────────────────
 function ServiceOrderV2View({ order, onBack, onToast }) {
-  const [openId,         setOpenId]         = useState(null);
-  const [items,          setItems]          = useState([]);
-  const [loadingItems,   setLoadingItems]   = useState(true);
+  const [openId,          setOpenId]          = useState(null);
+  const [items,           setItems]           = useState([]);
+  const [loadingItems,    setLoadingItems]    = useState(true);
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [discountMap,    setDiscountMap]    = useState({});  // { txnId: pct }
-  const [savingDiscount, setSavingDiscount] = useState(false);
+  const [discountMap,     setDiscountMap]     = useState({});  // { txnId: pct }
+  const [savingDiscount,  setSavingDiscount]  = useState(false);
 
   useEffect(() => {
     const filter = encodeURIComponent(`salesOrder_salesOrderId eq '${order.salesOrderId}'`);

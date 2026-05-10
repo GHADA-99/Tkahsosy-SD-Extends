@@ -223,7 +223,7 @@ function App() {
         {tab === 'reports' && <div style={{flex: 1}}/>}
 
         {tab === 'ordersV2' && (
-          <AggregationV2 onToast={showToast} onOrderSaved={() => setOrdersV2Count(c => c + 1)}/>
+          <AggregationV2 onToast={showToast} onOrderSaved={() => setOrdersV2Count(c => c + 1)} onOrderDeleted={() => setOrdersV2Count(c => c - 1)}/>
         )}
 
         {(tab === 'all' || tab === 'feed') && (
