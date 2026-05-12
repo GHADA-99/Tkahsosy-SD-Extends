@@ -21,7 +21,8 @@
     "requires": {
       "db": {
         "kind": "sqlite",
-        "credentials": { "url": "db/medsync.db" }
+        "credentials": { "url": "db/medsync.db" },
+        "schema_evolution": "auto"
       }
     },
     "features": {

@@ -28,12 +28,23 @@ function App() {
     Promise.all([
       fetch('/api/ModalityGroups').then(r => r.json()),
       fetch('/api/ModalityGroupItems').then(r => r.json()),
-    ]).then(([groupsData, itemsData]) => {
+      fetch('/api/ModalityServiceTypes').then(r => r.json()),
+    ]).then(([groupsData, itemsData, stData]) => {
+      const stByItem = {};
+      (stData.value || []).forEach(st => {
+        const iCode = st.item_itemCode;
+        if (!stByItem[iCode]) stByItem[iCode] = [];
+        stByItem[iCode].push({ id: st.serviceTypeCode, name: st.name });
+      });
       const itemsByGroup = {};
       (itemsData.value || []).forEach(item => {
         const gCode = item.group_groupCode;
         if (!itemsByGroup[gCode]) itemsByGroup[gCode] = [];
-        itemsByGroup[gCode].push({ id: item.itemCode, code: item.examCode });
+        itemsByGroup[gCode].push({
+          id           : item.itemCode,
+          code         : item.examCode,
+          serviceTypes : stByItem[item.itemCode] || [],
+        });
       });
       const fetched = (groupsData.value || []).map(g => ({
         id                 : g.groupCode,
@@ -63,6 +74,7 @@ function App() {
       .then(data => { if (typeof data['@odata.count'] === 'number') setOrdersV2Count(data['@odata.count']); })
       .catch(() => {});
   }, []);
+  const importFileRef = useRef(null);
   const [nav, setNav] = useState('dashboard');
   const [tab, setTab] = useState('all');
   const [filters, setFilters] = useState({ q: '', mod: 'all', range: 'all' });
@@ -94,16 +106,32 @@ function App() {
       }));
       const itemRows = groups.flatMap(g =>
         g.items.map(item => ({
-          'Group Code' : g.id.toUpperCase(),
-          'Group Name' : g.name,
-          'Modality'   : g.modality,
-          'Modality ID': item.id,
-          'Exam Code'  : item.code,
+          'Group Code'      : g.id.toUpperCase(),
+          'Group Name'      : g.name,
+          'Modality'        : g.modality,
+          'Modality ID'     : item.id,
+          'Exam Code'       : item.code,
+          'Service Types #' : (item.serviceTypes || []).length,
+          'Service Types'   : (item.serviceTypes || []).map(st => st.name).join(', '),
         }))
       );
+      const serviceTypeRows = groups.flatMap(g =>
+        g.items.flatMap(item =>
+          (item.serviceTypes || []).map(st => ({
+            'Group Code'        : g.id.toUpperCase(),
+            'Group Name'        : g.name,
+            'Modality'          : g.modality,
+            'Modality ID'       : item.id,
+            'Exam Code'         : item.code,
+            'Service Type Code' : st.id,
+            'Service Type Name' : st.name,
+          }))
+        )
+      );
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(groupRows), 'Modality Groups');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows),  'Modality Items');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(groupRows),                                      'Modality Groups');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows),                                       'Modality Items');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(serviceTypeRows.length ? serviceTypeRows : [{}]), 'Service Types');
       XLSX.writeFile(wb, 'modality-groups.xlsx');
       showToast('Excel file exported');
 
@@ -144,6 +172,126 @@ function App() {
       }
     }
   }, [tab, groups, showToast]);
+
+  const handleImport = useCallback(async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const wb = XLSX.read(ev.target.result, { type: 'array' });
+
+        const groupSheet = wb.Sheets['Modality Groups'];
+        const itemSheet  = wb.Sheets['Modality Items'];
+        const stSheet    = wb.Sheets['Service Types'];
+
+        if (!groupSheet) { showToast('Invalid file: missing "Modality Groups" sheet'); return; }
+
+        const groupRows = XLSX.utils.sheet_to_json(groupSheet);
+        const itemRows  = itemSheet ? XLSX.utils.sheet_to_json(itemSheet)  : [];
+        const stRows    = stSheet   ? XLSX.utils.sheet_to_json(stSheet)    : [];
+
+        // Build sets of existing keys so we know PATCH vs POST
+        const existingGroupIds = new Set(groups.map(g => g.id));
+        const existingItemIds  = new Set(groups.flatMap(g => g.items.map(i => i.id)));
+        const existingStIds    = new Set(groups.flatMap(g => g.items.flatMap(i => (i.serviceTypes || []).map(st => st.id))));
+
+        const hdrs = { 'Content-Type': 'application/json' };
+        let failedGroups = 0, failedItems = 0, failedSt = 0;
+
+        // Upsert groups sequentially to respect FK order
+        for (const row of groupRows) {
+          const code = String(row['Group Code'] || '').toLowerCase().trim();
+          if (!code) continue;
+          const body = {
+            groupCode            : code,
+            name                 : String(row['Name']                    || ''),
+            modality             : String(row['Modality']                || ''),
+            discount             : Number(row['Discount (%)']            || 0),
+            qtyOrig              : Number(row['Original Qty']            || 0),
+            qtyUpdated           : Number(row['Updated Qty']             || 0),
+            finished             : row['Status'] === 'Finished',
+            firstThreshVol       : Number(row['1st Threshold Vol']       || 0),
+            firstThreshDiscount  : Number(row['1st Threshold Disc (%)']  || 0),
+            secondThreshVol      : Number(row['2nd Threshold Vol']       || 0),
+            secondThreshDiscount : Number(row['2nd Threshold Disc (%)']  || 0),
+          };
+          const res = existingGroupIds.has(code)
+            ? await fetch(`/api/ModalityGroups('${code}')`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) })
+            : await fetch('/api/ModalityGroups',             { method: 'POST',  headers: hdrs, body: JSON.stringify(body) });
+          if (!res.ok) failedGroups++;
+        }
+
+        // Upsert items
+        for (const row of itemRows) {
+          const itemCode  = String(row['Modality ID']  || '').trim();
+          const groupCode = String(row['Group Code']   || '').toLowerCase().trim();
+          const examCode  = String(row['Exam Code']    || '').trim();
+          if (!itemCode || !groupCode) continue;
+          const body = { itemCode, group_groupCode: groupCode, examCode };
+          const res = existingItemIds.has(itemCode)
+            ? await fetch(`/api/ModalityGroupItems('${itemCode}')`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) })
+            : await fetch('/api/ModalityGroupItems',                 { method: 'POST',  headers: hdrs, body: JSON.stringify(body) });
+          if (!res.ok) failedItems++;
+        }
+
+        // Upsert service types
+        for (const row of stRows) {
+          const stCode   = String(row['Service Type Code'] || '').trim();
+          const itemCode = String(row['Modality ID']       || '').trim();
+          const name     = String(row['Service Type Name'] || '').trim();
+          if (!stCode || !itemCode) continue;
+          const body = { serviceTypeCode: stCode, item_itemCode: itemCode, name };
+          const res = existingStIds.has(stCode)
+            ? await fetch(`/api/ModalityServiceTypes('${stCode}')`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) })
+            : await fetch('/api/ModalityServiceTypes',               { method: 'POST',  headers: hdrs, body: JSON.stringify(body) });
+          if (!res.ok) failedSt++;
+        }
+
+        // Refetch and rebuild state
+        const [gData, iData, sData] = await Promise.all([
+          fetch('/api/ModalityGroups').then(r => r.json()),
+          fetch('/api/ModalityGroupItems').then(r => r.json()),
+          fetch('/api/ModalityServiceTypes').then(r => r.json()),
+        ]);
+        const stByItem = {};
+        (sData.value || []).forEach(st => {
+          if (!stByItem[st.item_itemCode]) stByItem[st.item_itemCode] = [];
+          stByItem[st.item_itemCode].push({ id: st.serviceTypeCode, name: st.name });
+        });
+        const itemsByGroup = {};
+        (iData.value || []).forEach(item => {
+          if (!itemsByGroup[item.group_groupCode]) itemsByGroup[item.group_groupCode] = [];
+          itemsByGroup[item.group_groupCode].push({
+            id: item.itemCode, code: item.examCode,
+            serviceTypes: stByItem[item.itemCode] || [],
+          });
+        });
+        const fetched = (gData.value || []).map(g => ({
+          id: g.groupCode, name: g.name, modality: g.modality,
+          discount: g.discount, qtyOrig: g.qtyOrig, qtyUpdated: g.qtyUpdated,
+          finished: g.finished,
+          firstThreshVol: g.firstThreshVol, firstThreshDiscount: g.firstThreshDiscount,
+          secondThreshVol: g.secondThreshVol, secondThreshDiscount: g.secondThreshDiscount,
+          items: itemsByGroup[g.groupCode] || [],
+        }));
+        setGroups(fetched);
+        window.MODALITY_GROUPS = fetched;
+        const totalFailed = failedGroups + failedItems + failedSt;
+        if (totalFailed > 0) {
+          showToast(`Import done — ${totalFailed} row${totalFailed !== 1 ? 's' : ''} failed to save`);
+        } else {
+          showToast(`Imported ${groupRows.length} group${groupRows.length !== 1 ? 's' : ''}, ${itemRows.length} item${itemRows.length !== 1 ? 's' : ''}, ${stRows.length} service type${stRows.length !== 1 ? 's' : ''}`);
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Import failed — check file format');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }, [groups, showToast]);
 
   // Tweaks-mode wiring
   useEffect(() => {
@@ -206,6 +354,13 @@ function App() {
           if (navToTab[id]) setTab(navToTab[id]);
         }} counts={counts}/>
 
+      <input
+        ref={importFileRef}
+        type="file"
+        accept=".xlsx,.xls"
+        style={{display: 'none'}}
+        onChange={handleImport}/>
+
       <div className={mainClass}>
         {tab !== 'feed' && tab !== 'reports' && tab !== 'ordersV2' && (
           <PageHeader
@@ -215,6 +370,7 @@ function App() {
             notifCount={newCount}
             liveCount={tab === 'feed' ? 0 : newCount}
             onExport={handleExport}
+            onImport={tab === 'groups' ? () => importFileRef.current?.click() : undefined}
             onCalculateDiscount={() => showToast('Discount calculated')}/>
         )}
 

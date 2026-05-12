@@ -108,6 +108,7 @@ function GroupDetailModal({ group, onClose }) {
                   <tr>
                     <th style={{textAlign: 'left'}}>Modality ID</th>
                     <th style={{textAlign: 'left'}}>Exam Code</th>
+                    <th style={{textAlign: 'left'}}>Service Types</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,6 +116,24 @@ function GroupDetailModal({ group, onClose }) {
                     <tr key={item.id}>
                       <td><span className="mid-id">{item.id}</span></td>
                       <td><span className="exam-code-cell">{item.code}</span></td>
+                      <td>
+                        {item.serviceTypes && item.serviceTypes.length > 0 && (
+                          <div style={{display: 'flex', flexWrap: 'wrap', gap: 4}}>
+                            {item.serviceTypes.map(st => (
+                              <span key={st.id} style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 4,
+                                padding: '2px 7px', borderRadius: 999,
+                                background: 'color-mix(in oklab, var(--accent) 10%, transparent)',
+                                border: '1px solid color-mix(in oklab, var(--accent) 25%, var(--border))',
+                                fontSize: 10.5, fontWeight: 500, color: 'var(--accent-700)',
+                              }}>
+                                <I.Tag size={8}/>
+                                {st.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -148,8 +167,15 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(group.qtyUpdated);
   const [expanded, setExpanded] = useState(false);
+  const [expandedItems, setExpandedItems] = useState(new Set());
   const [modalOpen, setModalOpen] = useState(false);
   const hasItems = group.items && group.items.length > 0;
+
+  const toggleItem = (itemId) => setExpandedItems(prev => {
+    const next = new Set(prev);
+    next.has(itemId) ? next.delete(itemId) : next.add(itemId);
+    return next;
+  });
 
   useEffect(() => { setDraft(group.qtyUpdated); }, [group.qtyUpdated]);
 
@@ -332,27 +358,95 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
                 <tr>
                   <TH>Modality ID</TH>
                   <TH>Exam Code</TH>
+                  <TH align="center">Service Types</TH>
                 </tr>
               </thead>
               <tbody>
-                {group.items.map((item, i) => (
-                  <tr key={item.id}>
-                    <TD i={i}>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 11.5, fontWeight: 600,
-                        color: 'var(--ink)',
-                      }}>{item.id}</span>
-                    </TD>
-                    <TD i={i}>
-                      <span style={{
-                        fontFamily: "'JetBrains Mono', monospace",
-                        fontSize: 11.5, fontWeight: 400,
-                        color: 'var(--muted)',
-                      }}>{item.code}</span>
-                    </TD>
-                  </tr>
-                ))}
+                {group.items.map((item, i) => {
+                  const hasServiceTypes = item.serviceTypes && item.serviceTypes.length > 0;
+                  const itemExpanded = expandedItems.has(item.id);
+                  return (
+                    <React.Fragment key={item.id}>
+                      <tr
+                        onClick={hasServiceTypes ? () => toggleItem(item.id) : undefined}
+                        style={{cursor: hasServiceTypes ? 'pointer' : 'default'}}
+                      >
+                        <TD i={i}>
+                          <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
+                            {hasServiceTypes && (
+                              <I.Chevron size={11} style={{
+                                flexShrink: 0,
+                                color: 'var(--accent)',
+                                transform: itemExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                                transition: 'transform .18s',
+                              }}/>
+                            )}
+                            <span style={{
+                              fontFamily: "'JetBrains Mono', monospace",
+                              fontSize: 11.5, fontWeight: 600,
+                              color: 'var(--ink)',
+                            }}>{item.id}</span>
+                          </span>
+                        </TD>
+                        <TD i={i}>
+                          <span style={{
+                            fontFamily: "'JetBrains Mono', monospace",
+                            fontSize: 11.5, fontWeight: 400,
+                            color: 'var(--muted)',
+                          }}>{item.code}</span>
+                        </TD>
+                        <TD i={i} align="center">
+                          {hasServiceTypes && (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', gap: 4,
+                              padding: '2px 8px', borderRadius: 999,
+                              background: itemExpanded
+                                ? 'color-mix(in oklab, var(--accent) 15%, transparent)'
+                                : 'var(--surface-2)',
+                              border: '1px solid ' + (itemExpanded
+                                ? 'color-mix(in oklab, var(--accent) 30%, var(--border))'
+                                : 'var(--border)'),
+                              fontSize: 10.5, fontWeight: 600,
+                              color: itemExpanded ? 'var(--accent-700)' : 'var(--muted)',
+                            }}>
+                              <I.Tag size={9}/>
+                              {item.serviceTypes.length}
+                            </span>
+                          )}
+                        </TD>
+                      </tr>
+
+                      {itemExpanded && hasServiceTypes && item.serviceTypes.map((st, si) => (
+                        <tr key={st.id} style={{
+                          background: 'color-mix(in oklab, var(--accent) 4%, var(--surface))',
+                        }}>
+                          <td colSpan={3} style={{
+                            padding: '6px 10px 6px 32px',
+                            borderBottom: '1px solid var(--border)',
+                            fontSize: 11.5,
+                          }}>
+                            <span style={{display: 'flex', alignItems: 'center', gap: 8}}>
+                              <span style={{
+                                width: 1, height: 14,
+                                background: 'color-mix(in oklab, var(--accent) 40%, transparent)',
+                                flexShrink: 0,
+                              }}/>
+                              <I.Tag size={10} style={{color: 'var(--accent)', flexShrink: 0}}/>
+                              <span style={{
+                                fontFamily: "'JetBrains Mono', monospace",
+                                fontSize: 10.5, fontWeight: 500, color: 'var(--muted)',
+                                marginRight: 6,
+                              }}>{st.id}</span>
+                              <span style={{fontSize: 12, color: 'var(--ink)', fontWeight: 500}}>
+                                {st.name}
+                              </span>
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </React.Fragment>
+                  );
+                })}
               </tbody>
             </table>
           </div>

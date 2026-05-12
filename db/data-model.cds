@@ -165,7 +165,14 @@ entity ModalityGroups : managed {
 }
 
 entity ModalityGroupItems {
-  key itemCode : String(50);
-      group    : Association to ModalityGroups not null;
-      examCode : String(50) not null;
+  key itemCode     : String(50);
+      group        : Association to ModalityGroups not null;
+      examCode     : String(50) not null;
+      serviceTypes : Association to many ModalityServiceTypes on serviceTypes.item = $self;
+}
+
+entity ModalityServiceTypes {
+  key serviceTypeCode : String(50);
+      item            : Association to ModalityGroupItems not null;
+      name            : String(200) not null;
 }

@@ -98,8 +98,9 @@ service MedSyncService {
     FilterRestrictions: { Filterable: true },
     SortRestrictions  : { Sortable: true }
   }
-  entity ModalityGroups     as projection on medsync.ModalityGroups;
-  entity ModalityGroupItems as projection on medsync.ModalityGroupItems;
+  entity ModalityGroups        as projection on medsync.ModalityGroups;
+  entity ModalityGroupItems    as projection on medsync.ModalityGroupItems;
+  entity ModalityServiceTypes  as projection on medsync.ModalityServiceTypes;
 
   // ─── Functions ────────────────────────────────────────────────────────────────
   @requires: ['admin']
