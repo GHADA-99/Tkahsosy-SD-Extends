@@ -25,6 +25,7 @@ modules:
     requires:
       - name: medsync-db
       - name: medsync-auth
+      - name: medsync-destination
     provides:
       - name: medsync-srv-api
         properties:
@@ -69,6 +70,13 @@ resources:
       service-plan: hdi-shared
     properties:
       hdi-service-name: ${service-name}
+
+  # ── Destination Service ────────────────────────────────────────────────────
+  - name: medsync-destination
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service     : destination
+      service-plan: lite
 
   # ── XSUAA Authentication ───────────────────────────────────────────────────
   - name: medsync-auth

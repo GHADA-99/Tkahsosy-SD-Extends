@@ -15,6 +15,7 @@ const cds = require('@sap/cds');
 const { validateEmail, validatePhone, validateName, validateLicenseNumber, validateAppointmentTime, validateStatusTransition } = require('./utils/validators');
 const { generateAuditLog, generateNotification, getAppointmentEndTime, getReminderTime, timeSlotsOverlap } = require('./utils/helpers');
 const { AUDIT_ACTIONS, NOTIFICATION_TYPE, CONFIDENTIALITY_LEVEL, APPOINTMENT_STATUS } = require('./utils/constants');
+const { registerSalesOrderV2Handlers } = require('./salesorder-integration');
 
 module.exports = class MedSyncService extends cds.ApplicationService {
 
@@ -421,6 +422,11 @@ module.exports = class MedSyncService extends cds.ApplicationService {
       await DELETE.from(Notifications).where({ isRead: true });
       return { deleted: 0 };
     });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  SALES ORDERS V2 – S/4HANA integration
+    // ═══════════════════════════════════════════════════════════════════════════
+    registerSalesOrderV2Handlers(this);
 
     await super.init();
   }

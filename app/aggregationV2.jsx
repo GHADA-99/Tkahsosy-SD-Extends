@@ -775,13 +775,12 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
     if (saving || savedOrder) return;
     setSaving(true);
     const salesOrderId = `SO2-2026-${String(Math.floor(1000 + Math.random() * 8999))}`;
-    const erpId        = `ERP-V2-${String(Math.floor(88000 + Math.random() * 999))}`;
     const finalAmount  = discountApplied ? discountedTotal : totalAmount;
 
     try {
       await fetch('/api/SalesOrdersV2', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ salesOrderId, erpSalesOrderId: erpId, month: monthLabel, status: 'draft', totalAmount: finalAmount }),
+        body: JSON.stringify({ salesOrderId, month: monthLabel, status: 'draft', totalAmount: finalAmount }),
       });
       await Promise.all(transactions.map(t => {
         const pct = discountMap[t.id] || 0;
@@ -803,10 +802,29 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
     } catch (_) {}
 
     setSaving(false);
-    const order = { salesOrderId, erpSalesOrderId: erpId, month: monthLabel, status: 'draft', totalAmount: finalAmount };
+    const order = { salesOrderId, erpSalesOrderId: 'Pending...', month: monthLabel, status: 'pending', totalAmount: finalAmount };
     setSavedOrder(order);
-    onToast(`Service Order V2 ${salesOrderId} saved`);
+    onToast(`Service Order V2 ${salesOrderId} saved — waiting for ERP confirmation`);
     setTimeout(() => onSaved(order), 1400);
+
+    // Poll backend every 2s (up to 30s) until the real ERP Sales Order ID is returned from S/4HANA
+    for (let attempt = 0; attempt < 15; attempt++) {
+      await new Promise(r => setTimeout(r, 2000));
+      try {
+        const res  = await fetch(`/api/SalesOrdersV2('${salesOrderId}')`);
+        const data = await res.json();
+        if (data.status === 'submitted' && data.erpSalesOrderId) {
+          setSavedOrder(prev => ({ ...prev, erpSalesOrderId: data.erpSalesOrderId, status: 'submitted' }));
+          onToast(`ERP Sales Order ${data.erpSalesOrderId} created in S/4HANA`);
+          return;
+        }
+        if (data.status === 'error') {
+          setSavedOrder(prev => ({ ...prev, erpSalesOrderId: 'Failed', status: 'error' }));
+          onToast('S/4HANA posting failed — check server logs');
+          return;
+        }
+      } catch (_) {}
+    }
   };
 
   const CopyBtn = ({ value }) => (

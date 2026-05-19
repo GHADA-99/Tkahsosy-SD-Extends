@@ -3,26 +3,39 @@
   "version": "1.0.0",
   "description": "MedSync Medical Synchronization Platform – SAP CAP v9 application",
   "dependencies": {
-    "@sap/cds": "^9"
+    "@sap/cds": "^9",
+    "@sap-cloud-sdk/connectivity": "^4",
+    "@sap-cloud-sdk/http-client": "^4",
+    "@sap-cloud-sdk/resilience": "^4"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2",
     "jest": "^29"
   },
   "scripts": {
-    "start"  : "cds-serve",
-    "watch"  : "cds watch",
-    "build"  : "cds build/all",
-    "test"   : "jest --testPathPattern=test/",
-    "deploy" : "cds deploy --to sqlite:db/medsync.db",
-    "lint"   : "eslint srv/ --ext .js"
+    "start": "cds-serve",
+    "watch": "cds watch",
+    "build": "cds build/all",
+    "test": "jest --testPathPattern=test/",
+    "deploy": "cds deploy --to sqlite:db/medsync.db",
+    "lint": "eslint srv/ --ext .js"
   },
   "cds": {
     "requires": {
       "db": {
         "kind": "sqlite",
-        "credentials": { "url": "db/medsync.db" },
+        "credentials": {
+          "url": "db/medsync.db"
+        },
         "schema_evolution": "auto"
+      },
+      "API_SALES_ORDER_SRV": {
+        "kind": "odata-v2",
+        "model": "srv/external/API_SALES_ORDER_SRV",
+        "credentials": {
+          "destination": "Public_Cloud",
+          "path": "/sap/opu/odata/sap/API_SALES_ORDER_SRV"
+        }
       }
     },
     "features": {
@@ -31,7 +44,9 @@
   },
   "jest": {
     "testEnvironment": "node",
-    "testMatch": ["**/test/**/*.test.js"]
+    "testMatch": [
+      "**/test/**/*.test.js"
+    ]
   },
   "private": true
 }
