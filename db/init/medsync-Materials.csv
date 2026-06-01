@@ -1,0 +1,35 @@
+materialCode,descriptionEn,descriptionAr,modality,modalityGroup,materialGroup1,naphisCode,scanType,examCode,pricing
+MAT-CT-001,CT Chest without Contrast,أشعة مقطعية للصدر بدون صبغة,CT,CT-THORAX,Diagnostic Imaging,NPHIES-CT-0011,Standard,CT-CHEST-NC,850.00
+MAT-CT-002,CT Chest with Contrast,أشعة مقطعية للصدر مع صبغة,CT,CT-THORAX,Diagnostic Imaging,NPHIES-CT-0012,With Contrast,CT-CHEST-C,1050.00
+MAT-CT-003,CT Abdomen without Contrast,أشعة مقطعية للبطن بدون صبغة,CT,CT-ABDOMEN,Diagnostic Imaging,NPHIES-CT-0021,Standard,CT-ABD-NC,900.00
+MAT-CT-004,CT Abdomen with Contrast,أشعة مقطعية للبطن مع صبغة,CT,CT-ABDOMEN,Diagnostic Imaging,NPHIES-CT-0022,With Contrast,CT-ABD-C,1100.00
+MAT-CT-005,CT Abdomen and Pelvis with Contrast,أشعة مقطعية للبطن والحوض مع صبغة,CT,CT-ABDOMEN,Diagnostic Imaging,NPHIES-CT-0023,With Contrast,CT-ABD-PEL-C,1350.00
+MAT-CT-006,CT Brain without Contrast,أشعة مقطعية للدماغ بدون صبغة,CT,CT-NEURO,Diagnostic Imaging,NPHIES-CT-0031,Standard,CT-BRAIN-NC,850.00
+MAT-CT-007,CT Brain with Contrast,أشعة مقطعية للدماغ مع صبغة,CT,CT-NEURO,Diagnostic Imaging,NPHIES-CT-0032,With Contrast,CT-BRAIN-C,1050.00
+MAT-CT-008,CT Spine Cervical,أشعة مقطعية للعمود الفقري العنقي,CT,CT-SPINE,Diagnostic Imaging,NPHIES-CT-0041,Standard,CT-SPINE-C,950.00
+MAT-CT-009,CT Spine Lumbar,أشعة مقطعية للعمود الفقري القطني,CT,CT-SPINE,Diagnostic Imaging,NPHIES-CT-0042,Standard,CT-SPINE-L,950.00
+MAT-CT-010,CT Coronary Angiography,تصوير مقطعي لشرايين القلب,CT,CT-CARDIAC,Cardiac Imaging,NPHIES-CT-0051,Angiography,CT-CORO,2500.00
+MAT-MRI-001,MRI Brain without Contrast,رنين مغناطيسي للدماغ بدون صبغة,MRI,MRI-NEURO,Diagnostic Imaging,NPHIES-MRI-0011,Standard,MRI-BRAIN-NC,1400.00
+MAT-MRI-002,MRI Brain with Contrast,رنين مغناطيسي للدماغ مع صبغة,MRI,MRI-NEURO,Diagnostic Imaging,NPHIES-MRI-0012,With Contrast,MRI-BRAIN-C,1700.00
+MAT-MRI-003,MRI Spine Cervical,رنين مغناطيسي للعمود الفقري العنقي,MRI,MRI-SPINE,Diagnostic Imaging,NPHIES-MRI-0021,Standard,MRI-SPINE-CV,1500.00
+MAT-MRI-004,MRI Spine Lumbar,رنين مغناطيسي للعمود الفقري القطني,MRI,MRI-SPINE,Diagnostic Imaging,NPHIES-MRI-0022,Standard,MRI-SPINE-LB,1500.00
+MAT-MRI-005,MRI Knee,رنين مغناطيسي للركبة,MRI,MRI-MSK,Musculoskeletal,NPHIES-MRI-0031,Standard,MRI-KNEE,1300.00
+MAT-MRI-006,MRI Shoulder,رنين مغناطيسي للكتف,MRI,MRI-MSK,Musculoskeletal,NPHIES-MRI-0032,Standard,MRI-SHOULDER,1300.00
+MAT-MRI-007,MRI Abdomen with Contrast,رنين مغناطيسي للبطن مع صبغة,MRI,MRI-ABDOMEN,Diagnostic Imaging,NPHIES-MRI-0041,With Contrast,MRI-ABD-C,1900.00
+MAT-MRI-008,MRI Pelvis with Contrast,رنين مغناطيسي للحوض مع صبغة,MRI,MRI-ABDOMEN,Diagnostic Imaging,NPHIES-MRI-0042,With Contrast,MRI-PEL-C,1800.00
+MAT-XR-001,X-Ray Chest PA,أشعة سينية للصدر,XR,XR-CHEST,Diagnostic Imaging,NPHIES-XR-0011,Standard,XR-CHEST-PA,150.00
+MAT-XR-002,X-Ray Chest Lateral,أشعة سينية جانبية للصدر,XR,XR-CHEST,Diagnostic Imaging,NPHIES-XR-0012,Standard,XR-CHEST-LAT,180.00
+MAT-XR-003,X-Ray Lumbar Spine AP and Lateral,أشعة سينية للعمود الفقري القطني,XR,XR-SPINE,Diagnostic Imaging,NPHIES-XR-0021,Standard,XR-LS-APLAT,220.00
+MAT-XR-004,X-Ray Pelvis AP,أشعة سينية للحوض,XR,XR-MSK,Musculoskeletal,NPHIES-XR-0031,Standard,XR-PELVIS-AP,160.00
+MAT-XR-005,X-Ray Knee AP and Lateral,أشعة سينية للركبة,XR,XR-MSK,Musculoskeletal,NPHIES-XR-0032,Standard,XR-KNEE-APLAT,200.00
+MAT-US-001,Ultrasound Abdomen Upper,سونار البطن العلوي,US,US-ABDOMEN,Diagnostic Imaging,NPHIES-US-0011,Standard,US-ABD-UPPER,350.00
+MAT-US-002,Ultrasound Abdomen Complete,سونار البطن الكامل,US,US-ABDOMEN,Diagnostic Imaging,NPHIES-US-0012,Standard,US-ABD-FULL,450.00
+MAT-US-003,Ultrasound Pelvis Transabdominal,سونار الحوض عبر البطن,US,US-PELVIS,Diagnostic Imaging,NPHIES-US-0021,Standard,US-PEL-TA,400.00
+MAT-US-004,Ultrasound Thyroid,سونار الغدة الدرقية,US,US-NECK,Diagnostic Imaging,NPHIES-US-0031,Standard,US-THYROID,300.00
+MAT-US-005,Doppler Carotid Arteries,دوبلر شرايين الرقبة,US,US-VASCULAR,Vascular Imaging,NPHIES-US-0041,Doppler,US-CAROTID-DOP,600.00
+MAT-PET-001,PET-CT Whole Body FDG,مسح جسم كامل بالبيت-سي تي,PET,PET-ONCOLOGY,Nuclear Medicine,NPHIES-PET-0011,Whole Body,PET-WB-FDG,4500.00
+MAT-PET-002,PET-CT Brain FDG,فحص الدماغ بالبيت-سي تي,PET,PET-NEURO,Nuclear Medicine,NPHIES-PET-0021,Brain,PET-BRAIN-FDG,3800.00
+MAT-NM-001,Bone Scan Whole Body,مسح العظام الكامل,NM,NM-BONE,Nuclear Medicine,NPHIES-NM-0011,Whole Body,NM-BONE-WB,1800.00
+MAT-NM-002,Thyroid Scan with Uptake,مسح الغدة الدرقية,NM,NM-THYROID,Nuclear Medicine,NPHIES-NM-0021,Thyroid,NM-THYROID-SC,1400.00
+MAT-MG-001,Mammography Bilateral,تصوير الثدي الثنائي,MG,MG-SCREENING,Women Imaging,NPHIES-MG-0011,Bilateral,MG-BILAT,600.00
+MAT-MG-002,Mammography with Tomosynthesis,تصوير الثدي ثلاثي الأبعاد,MG,MG-DIAGNOSTIC,Women Imaging,NPHIES-MG-0021,Tomosynthesis,MG-TOMO,900.00

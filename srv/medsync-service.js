@@ -11,7 +11,9 @@
  *   - notification-service.js: Notifications (mark-read, cleanup)
  */
 
+require('dotenv').config();
 const cds = require('@sap/cds');
+const https = require('https');
 const { validateEmail, validatePhone, validateName, validateLicenseNumber, validateAppointmentTime, validateStatusTransition } = require('./utils/validators');
 const { generateAuditLog, generateNotification, getAppointmentEndTime, getReminderTime, timeSlotsOverlap } = require('./utils/helpers');
 const { AUDIT_ACTIONS, NOTIFICATION_TYPE, CONFIDENTIALITY_LEVEL, APPOINTMENT_STATUS } = require('./utils/constants');
@@ -83,44 +85,6 @@ module.exports = class MedSyncService extends cds.ApplicationService {
       await UPDATE(Patients).set({ isActive: true }).where({ ID });
       await _writeAudit(AuditLogs, AUDIT_ACTIONS.UPDATE, 'Patients', ID, null, { isActive: true }, req);
       return SELECT.one.from(Patients).where({ ID });
-    });
-
-    // ═══════════════════════════════════════════════════════════════════════════
-    //  DOCTORS
-    // ═══════════════════════════════════════════════════════════════════════════
-
-    this.before('CREATE', Doctors, async (req) => {
-      await _validateDoctor(req, req.data, Doctors);
-    });
-
-    this.before('UPDATE', Doctors, async (req) => {
-      await _validateDoctor(req, req.data, Doctors);
-    });
-
-    this.before('SAVE', Doctors, async (req) => {
-      await _validateDoctor(req, req.data, Doctors);
-    });
-
-    this.after('CREATE', Doctors, async (data, req) => {
-      await _writeAudit(AuditLogs, AUDIT_ACTIONS.CREATE, 'Doctors', data.ID, null, data, req);
-    });
-
-    this.after('UPDATE', Doctors, async (data, req) => {
-      await _writeAudit(AuditLogs, AUDIT_ACTIONS.UPDATE, 'Doctors', data.ID, null, data, req);
-    });
-
-    this.before('DELETE', Doctors, async (req) => {
-      const id = _id(req);
-      if (!id) return;
-      await UPDATE(Doctors).set({ isActive: false }).where({ ID: id });
-      req.reject(200, 'Doctor deactivated');
-    });
-
-    this.on('deactivateDoctor', Doctors, async (req) => {
-      const { ID } = req.params[0];
-      await UPDATE(Doctors).set({ isActive: false }).where({ ID });
-      await _writeAudit(AuditLogs, AUDIT_ACTIONS.UPDATE, 'Doctors', ID, null, { isActive: false }, req);
-      return SELECT.one.from(Doctors).where({ ID });
     });
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -428,6 +392,19 @@ module.exports = class MedSyncService extends cds.ApplicationService {
     // ═══════════════════════════════════════════════════════════════════════════
     registerSalesOrderV2Handlers(this);
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    //  POST ACCOUNTING DOCUMENT – proxy SOAP call to S/4HANA cloud tenant
+    // ═══════════════════════════════════════════════════════════════════════════
+    this.on('postAccountingDocument', async () => {
+      try {
+        const { accountingDocumentId } = await _soapPost();
+        return { success: true, message: 'Accounting document posted successfully', accountingDocumentId };
+      } catch (err) {
+        console.error('[SOAP] postAccountingDocument failed:', err.message);
+        return { success: false, message: err.message || 'Failed to post accounting document', accountingDocumentId: null };
+      }
+    });
+
     await super.init();
   }
 };
@@ -449,22 +426,6 @@ async function _validatePatient(req, data, isUpdate, Patients) {
   if (data.lastName)  { const r = validateName(data.lastName,  'Last name');  if (!r.valid) return req.error(400, r.error); }
 }
 
-async function _validateDoctor(req, data, Doctors) {
-  if (data.email) {
-    const r = validateEmail(data.email);
-    if (!r.valid) return req.error(400, r.error);
-  }
-  if (data.phone) {
-    const r = validatePhone(data.phone);
-    if (!r.valid) return req.error(400, r.error);
-  }
-  if (data.licenseNumber) {
-    const r = validateLicenseNumber(data.licenseNumber);
-    if (!r.valid) return req.error(400, r.error);
-    const existing = await SELECT.one.from(Doctors).where({ licenseNumber: data.licenseNumber });
-    if (existing && existing.ID !== data.ID) return req.error(409, `License number ${data.licenseNumber} is already registered`);
-  }
-}
 
 async function _checkDoctorConflict(Appointments, doctorId, scheduledDate, duration, excludeId) {
   const apptStart = new Date(scheduledDate);
@@ -587,4 +548,93 @@ function _id(req) {
   return req.params && req.params[0]
     ? (typeof req.params[0] === 'object' ? req.params[0].ID : req.params[0])
     : (req.data ? req.data.ID : null);
+}
+
+function _soapPost() {
+  return new Promise((resolve, reject) => {
+    const user = process.env.SOAP_USER || '';
+    const pass = process.env.SOAP_PASS || '';
+    const auth = Buffer.from(`${user}:${pass}`).toString('base64');
+
+    const soapBody = `<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"
+               xmlns:sfin="http://sap.com/xi/SAPSCORE/SFIN"
+               xmlns:yy1="http://SAPCustomFields.com/YY1_">
+   <soap:Header/>
+   <soap:Body>
+      <sfin:JournalEntryBulkCreateRequest>
+         <MessageHeader>
+            <ID>BULK-001</ID>
+            <CreationDateTime>2026-05-17T10:00:00Z</CreationDateTime>
+         </MessageHeader>
+         <JournalEntryCreateRequest>
+            <MessageHeader>
+               <CreationDateTime>2026-05-17T10:00:00Z</CreationDateTime>
+            </MessageHeader>
+            <JournalEntry>
+               <OriginalReferenceDocumentType>BKPFF</OriginalReferenceDocumentType>
+               <BusinessTransactionType>RFBU</BusinessTransactionType>
+               <AccountingDocumentType>SA</AccountingDocumentType>
+               <CreatedByUser>INT_USER2</CreatedByUser>
+               <CompanyCode>5910</CompanyCode>
+               <DocumentDate>2026-05-17</DocumentDate>
+               <PostingDate>2026-05-17</PostingDate>
+               <Item>
+                  <GLAccount listID="">24093000</GLAccount>
+                  <AmountInTransactionCurrency currencyCode="SAR">1000.00</AmountInTransactionCurrency>
+                  <AmountInCompanyCodeCurrency currencyCode="SAR">1000.00</AmountInCompanyCodeCurrency>
+                  <DebitCreditCode>D</DebitCreditCode>
+                  <AccountAssignment><ProfitCenter>YB101</ProfitCenter></AccountAssignment>
+                  <Plant>5910</Plant>
+               </Item>
+               <Item>
+                  <GLAccount listID="">41000000</GLAccount>
+                  <AmountInTransactionCurrency currencyCode="SAR">-1000.00</AmountInTransactionCurrency>
+                  <AmountInCompanyCodeCurrency currencyCode="SAR">-1000.00</AmountInCompanyCodeCurrency>
+                  <DebitCreditCode>C</DebitCreditCode>
+                  <AccountAssignment><ProfitCenter>YB101</ProfitCenter></AccountAssignment>
+                  <ProfitabilitySupplement>
+                     <Customer>59100100</Customer>
+                     <SoldMaterial>B006</SoldMaterial>
+                     <FunctionalArea>YB10</FunctionalArea>
+                     <yy1:YY1_Modality>101</yy1:YY1_Modality>
+                  </ProfitabilitySupplement>
+                  <Plant>5910</Plant>
+               </Item>
+            </JournalEntry>
+         </JournalEntryCreateRequest>
+      </sfin:JournalEntryBulkCreateRequest>
+   </soap:Body>
+</soap:Envelope>`;
+
+    const bodyBytes = Buffer.from(soapBody, 'utf8');
+    const options = {
+      hostname: 'my405604-api.s4hana.cloud.sap',
+      port    : 443,
+      path    : '/sap/bc/srt/scs_ext/sap/journalentrycreaterequestconfi',
+      method  : 'POST',
+      headers : {
+        'Content-Type'  : 'application/soap+xml; charset=utf-8',
+        'Authorization' : `Basic ${auth}`,
+        'Content-Length': bodyBytes.length,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      let raw = '';
+      res.on('data', chunk => { raw += chunk; });
+      res.on('end', () => {
+        if (res.statusCode >= 200 && res.statusCode < 300) {
+          const match = raw.match(/<AccountingDocument>(.*?)<\/AccountingDocument>/);
+          resolve({ raw, accountingDocumentId: match ? match[1] : null });
+        } else {
+          reject(new Error(`SOAP endpoint returned HTTP ${res.statusCode}: ${raw.slice(0, 200)}`));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.write(bodyBytes);
+    req.end();
+  });
 }

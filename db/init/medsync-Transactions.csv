@@ -1,0 +1,25 @@
+transactionId,serviceMaterial,examNameEn,examNameAr,modality,price,transactionDate,otherNmType,salesOffice,cost,discount,radiologist,room
+TX-84230,CT-CHEST-C,CT Chest with Contrast,أشعة مقطعية للصدر مع صبغة,CT,1000,2026-05-10T14:00:00Z,PET CT,Riyadh Central,700,0,James Williams,CT Room 1
+TX-84229,CT-ABD-NC,CT Abdomen without Contrast,أشعة مقطعية للبطن بدون صبغة,CT,1000,2026-05-10T13:30:00Z,,Jeddah North,680,5,Patricia Brown,CT Room 2
+TX-84228,CT-HEAD-NC,CT Brain without Contrast,أشعة مقطعية للدماغ بدون صبغة,CT,1000,2026-05-10T12:45:00Z,,Dammam East,690,0,Richard Jones,CT Room 1
+TX-84227,CT-SPINE-L,CT Lumbar Spine,أشعة مقطعية للفقرات القطنية,CT,1000,2026-05-10T11:20:00Z,PET CT,Mecca Branch,670,10,Linda Miller,CT Room 2
+TX-84226,CT-CHEST-C,CT Chest with Contrast,أشعة مقطعية للصدر مع صبغة,CT,1000,2026-05-10T09:50:00Z,,Medina Branch,700,0,Charles Davis,CT Room 1
+TX-84225,MRI-BRAIN-C,MRI Brain with Contrast,رنين مغناطيسي للدماغ مع صبغة,MRI,1000,2026-05-09T15:00:00Z,,Riyadh Central,750,5,James Williams,MRI Room 1
+TX-84224,MRI-KNEE-R,MRI Right Knee,رنين مغناطيسي للركبة اليمنى,MRI,1000,2026-05-09T13:15:00Z,PET CT,Jeddah North,720,0,Patricia Brown,MRI Room 2
+TX-84223,MRI-SPINE-C,MRI Cervical Spine,رنين مغناطيسي للفقرات العنقية,MRI,1000,2026-05-09T11:30:00Z,,Dammam East,730,10,Richard Jones,MRI Room 1
+TX-84222,MRI-ABD-C,MRI Abdomen with Contrast,رنين مغناطيسي للبطن مع صبغة,MRI,1000,2026-05-09T09:45:00Z,,Mecca Branch,760,5,Linda Miller,MRI Room 2
+TX-84221,MRI-KNEE-R,MRI Right Knee,رنين مغناطيسي للركبة اليمنى,MRI,1000,2026-05-09T08:00:00Z,,Medina Branch,720,0,Charles Davis,MRI Room 1
+TX-84234,MRI-BRAIN-C,MRI Brain with Contrast,رنين مغناطيسي للدماغ مع صبغة,MRI,1000,2026-05-11T10:00:00Z,PET CT,Riyadh Central,750,15,James Williams,MRI Room 2
+TX-84233,MRI-SPINE-C,MRI Cervical Spine,رنين مغناطيسي للفقرات العنقية,MRI,1000,2026-05-11T11:00:00Z,,Jeddah North,730,0,Patricia Brown,MRI Room 1
+TX-84232,MRI-ABD-C,MRI Abdomen with Contrast,رنين مغناطيسي للبطن مع صبغة,MRI,1000,2026-05-11T12:00:00Z,,Dammam East,760,5,Richard Jones,MRI Room 2
+TX-84231,MRI-KNEE-R,MRI Right Knee,رنين مغناطيسي للركبة اليمنى,MRI,1000,2026-05-11T13:00:00Z,,Mecca Branch,720,10,Linda Miller,MRI Room 1
+TX-84220,XR-CHEST-PA,Chest X-Ray PA View,أشعة سينية للصدر أمامي,XR,1000,2026-05-08T16:00:00Z,,Medina Branch,630,0,Charles Davis,X-Ray Room 1
+TX-84219,XR-KNEE-AP,Knee X-Ray AP and Lateral,أشعة سينية للركبة أمامي وجانبي,XR,1000,2026-05-08T14:20:00Z,PET CT,Riyadh Central,640,5,James Williams,X-Ray Room 1
+TX-84218,XR-HAND-R,Right Hand X-Ray,أشعة سينية لليد اليمنى,XR,1000,2026-05-08T12:40:00Z,,Jeddah North,610,0,Patricia Brown,X-Ray Room 1
+TX-84217,XR-CHEST-PA,Chest X-Ray PA View,أشعة سينية للصدر أمامي,XR,1000,2026-05-08T11:00:00Z,,Dammam East,630,10,Richard Jones,X-Ray Room 1
+TX-84216,XR-KNEE-AP,Knee X-Ray AP and Lateral,أشعة سينية للركبة أمامي وجانبي,XR,1000,2026-05-08T09:20:00Z,,Mecca Branch,640,0,Linda Miller,X-Ray Room 1
+TX-84215,US-ABD-FULL,Abdominal Ultrasound,سونار للبطن الكامل,US,1000,2026-05-07T15:30:00Z,,Medina Branch,580,5,Charles Davis,Ultrasound Room 1
+TX-84214,US-PELVIC-T,Transvaginal Ultrasound,سونار عبر المهبل,US,1000,2026-05-07T13:45:00Z,PET CT,Riyadh Central,600,0,James Williams,Ultrasound Room 1
+TX-84213,US-THYR,Thyroid Ultrasound,سونار الغدة الدرقية,US,1000,2026-05-07T12:00:00Z,,Jeddah North,570,10,Patricia Brown,Ultrasound Room 1
+TX-84212,US-ABD-FULL,Abdominal Ultrasound,سونار للبطن الكامل,US,1000,2026-05-07T10:15:00Z,,Dammam East,580,0,Richard Jones,Ultrasound Room 1
+TX-84211,US-PELVIC-T,Transvaginal Ultrasound,سونار عبر المهبل,US,1000,2026-05-07T08:30:00Z,,Mecca Branch,600,15,Linda Miller,Ultrasound Room 1

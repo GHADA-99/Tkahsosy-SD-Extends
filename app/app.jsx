@@ -10,13 +10,19 @@ function App() {
       .then(data => {
         if (data.value && data.value.length > 0) {
           setTransactions(data.value.map(t => ({
-            id  : t.transactionId,
-            code: t.examCode,
-            en  : t.examNameEn,
-            ar  : t.examNameAr,
-            mod : t.modality,
-            price: t.price,
-            date: new Date(t.transactionDate),
+            id         : t.transactionId,
+            code       : t.serviceMaterial,
+            en         : t.examNameEn,
+            ar         : t.examNameAr,
+            mod        : t.modality,
+            price      : t.price,
+            date       : new Date(t.transactionDate),
+            otherNmType: t.otherNmType,
+            salesOffice   : t.salesOffice,
+            cost          : t.cost,
+            discount      : t.discount,
+            radiologist   : t.radiologist,
+            room          : t.room,
           })));
         }
       })
@@ -42,7 +48,6 @@ function App() {
         if (!itemsByGroup[gCode]) itemsByGroup[gCode] = [];
         itemsByGroup[gCode].push({
           id           : item.itemCode,
-          code         : item.examCode,
           serviceTypes : stByItem[item.itemCode] || [],
         });
       });
@@ -74,7 +79,26 @@ function App() {
       .then(data => { if (typeof data['@odata.count'] === 'number') setOrdersV2Count(data['@odata.count']); })
       .catch(() => {});
   }, []);
-  const importFileRef = useRef(null);
+
+  const [materialsCount, setMaterialsCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/Materials?$count=true&$top=0')
+      .then(r => r.json())
+      .then(data => { if (typeof data['@odata.count'] === 'number') setMaterialsCount(data['@odata.count']); })
+      .catch(() => {});
+  }, []);
+
+  const [doctorsCount, setDoctorsCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/Doctors?$count=true&$top=0')
+      .then(r => r.json())
+      .then(data => { if (typeof data['@odata.count'] === 'number') setDoctorsCount(data['@odata.count']); })
+      .catch(() => {});
+  }, []);
+  const importFileRef   = useRef(null);
+  const smImportFileRef = useRef(null);
   const [nav, setNav] = useState('dashboard');
   const [tab, setTab] = useState('all');
   const [filters, setFilters] = useState({ q: '', mod: 'all', range: 'all' });
@@ -94,11 +118,7 @@ function App() {
         'Group Code'            : g.id.toUpperCase(),
         'Name'                  : g.name,
         'Modality'              : g.modality,
-        'Discount (%)'          : g.discount,
-        'Original Qty'          : g.qtyOrig,
-        'Updated Qty'           : g.qtyUpdated,
-        'Completion (%)'        : Math.min(100, Math.round((g.qtyUpdated / g.qtyOrig) * 100)),
-        'Status'                : g.finished ? 'Finished' : 'In Progress',
+        'Status'                : g.finished ? 'Finished' : '',
         '1st Threshold Vol'     : g.firstThreshVol,
         '1st Threshold Disc (%)': g.firstThreshDiscount,
         '2nd Threshold Vol'     : g.secondThreshVol,
@@ -106,70 +126,33 @@ function App() {
       }));
       const itemRows = groups.flatMap(g =>
         g.items.map(item => ({
-          'Group Code'      : g.id.toUpperCase(),
-          'Group Name'      : g.name,
-          'Modality'        : g.modality,
-          'Modality ID'     : item.id,
-          'Exam Code'       : item.code,
-          'Service Types #' : (item.serviceTypes || []).length,
-          'Service Types'   : (item.serviceTypes || []).map(st => st.name).join(', '),
+          'Group Code'     : g.id.toUpperCase(),
+          'Group Name'     : g.name,
+          'Modality'       : g.modality,
+          'Modality ID'    : item.id,
+          'Exam Code'      : item.id,
+          'Service Types #': (item.serviceTypes || []).length,
         }))
       );
       const serviceTypeRows = groups.flatMap(g =>
         g.items.flatMap(item =>
           (item.serviceTypes || []).map(st => ({
-            'Group Code'        : g.id.toUpperCase(),
-            'Group Name'        : g.name,
-            'Modality'          : g.modality,
-            'Modality ID'       : item.id,
-            'Exam Code'         : item.code,
-            'Service Type Code' : st.id,
-            'Service Type Name' : st.name,
+            'Group Code'       : g.id.toUpperCase(),
+            'Group Name'       : g.name,
+            'Modality'         : g.modality,
+            'Modality ID'      : item.id,
+            'Exam Code'        : item.id,
+            'Service Type Code': st.id,
+            'Service Type Name': st.name,
           }))
         )
       );
       const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(groupRows),                                      'Modality Groups');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows),                                       'Modality Items');
-      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(serviceTypeRows.length ? serviceTypeRows : [{}]), 'Service Types');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(groupRows),                                         'Modality Groups');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows),                                          'Modality Items');
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(serviceTypeRows.length ? serviceTypeRows : [{}]),    'Service Types');
       XLSX.writeFile(wb, 'modality-groups.xlsx');
       showToast('Excel file exported');
-
-    } else if (tab === 'monthly') {
-      try {
-        const [ordersRes, itemsRes] = await Promise.all([
-          fetch('/api/SalesOrders'),
-          fetch('/api/SalesOrderItems'),
-        ]);
-        const ordersData = await ordersRes.json();
-        const itemsData  = await itemsRes.json();
-
-        const orderRows = (ordersData.value || []).map(o => ({
-          'Sales Order ID'    : o.salesOrderId,
-          'ERP Sales Order ID': o.erpSalesOrderId,
-          'Month'             : o.month,
-          'Status'            : o.status,
-          'Total Amount (SAR)': o.totalAmount,
-        }));
-
-        const itemRows = (itemsData.value || []).map(i => ({
-          'Item ID'           : i.itemId,
-          'Sales Order ID'    : i.salesOrder_salesOrderId,
-          'Transaction ID'    : i.transactionId,
-          'Exam Code'         : i.examCode,
-          'Exam Name'         : i.examNameEn,
-          'Price (SAR)'       : i.price,
-          'Transaction Date'  : i.transactionDate ? i.transactionDate.replace('T', ' ').replace('Z', '') : '',
-        }));
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(orderRows.length ? orderRows : [{}]), 'Sales Orders');
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(itemRows.length  ? itemRows  : [{}]), 'Sales Order Items');
-        XLSX.writeFile(wb, 'sales-orders.xlsx');
-        showToast('Sales orders exported');
-      } catch (_) {
-        showToast('Export failed');
-      }
     }
   }, [tab, groups, showToast]);
 
@@ -185,7 +168,8 @@ function App() {
 
         const groupSheet = wb.Sheets['Modality Groups'];
         const itemSheet  = wb.Sheets['Modality Items'];
-        const stSheet    = wb.Sheets['Service Types'];
+        // Accept V2 "Service Types" sheet OR legacy "Service Materials" sheet
+        const stSheet    = wb.Sheets['Service Types'] || wb.Sheets['Service Materials'];
 
         if (!groupSheet) { showToast('Invalid file: missing "Modality Groups" sheet'); return; }
 
@@ -207,8 +191,8 @@ function App() {
           if (!code) continue;
           const body = {
             groupCode            : code,
-            name                 : String(row['Name']                    || ''),
-            modality             : String(row['Modality']                || ''),
+            name                 : String(row['Name']                    || '').trim(),
+            modality             : String(row['Modality']                || '').trim(),
             discount             : Number(row['Discount (%)']            || 0),
             qtyOrig              : Number(row['Original Qty']            || 0),
             qtyUpdated           : Number(row['Updated Qty']             || 0),
@@ -228,25 +212,24 @@ function App() {
         for (const row of itemRows) {
           const itemCode  = String(row['Modality ID']  || '').trim();
           const groupCode = String(row['Group Code']   || '').toLowerCase().trim();
-          const examCode  = String(row['Exam Code']    || '').trim();
           if (!itemCode || !groupCode) continue;
-          const body = { itemCode, group_groupCode: groupCode, examCode };
+          const body = { itemCode, group_groupCode: groupCode };
           const res = existingItemIds.has(itemCode)
             ? await fetch(`/api/ModalityGroupItems('${itemCode}')`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) })
             : await fetch('/api/ModalityGroupItems',                 { method: 'POST',  headers: hdrs, body: JSON.stringify(body) });
           if (!res.ok) failedItems++;
         }
 
-        // Upsert service types
+        // Upsert service types — accept V2 columns (Service Type Code/Name) or legacy (Service Material Code/Name)
         for (const row of stRows) {
-          const stCode   = String(row['Service Type Code'] || '').trim();
-          const itemCode = String(row['Modality ID']       || '').trim();
-          const name     = String(row['Service Type Name'] || '').trim();
+          const stCode   = String(row['Service Type Code']  || row['Service Material Code'] || '').trim();
+          const itemCode = String(row['Modality ID']        || '').trim();
+          const name     = String(row['Service Type Name']  || row['Service Material Name'] || '').trim();
           if (!stCode || !itemCode) continue;
           const body = { serviceTypeCode: stCode, item_itemCode: itemCode, name };
           const res = existingStIds.has(stCode)
-            ? await fetch(`/api/ModalityServiceTypes('${stCode}')`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) })
-            : await fetch('/api/ModalityServiceTypes',               { method: 'POST',  headers: hdrs, body: JSON.stringify(body) });
+            ? await fetch(`/api/ModalityServiceTypes('${encodeURIComponent(stCode)}')`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) })
+            : await fetch('/api/ModalityServiceTypes',                                   { method: 'POST',  headers: hdrs, body: JSON.stringify(body) });
           if (!res.ok) failedSt++;
         }
 
@@ -265,7 +248,7 @@ function App() {
         (iData.value || []).forEach(item => {
           if (!itemsByGroup[item.group_groupCode]) itemsByGroup[item.group_groupCode] = [];
           itemsByGroup[item.group_groupCode].push({
-            id: item.itemCode, code: item.examCode,
+            id: item.itemCode,
             serviceTypes: stByItem[item.itemCode] || [],
           });
         });
@@ -292,6 +275,93 @@ function App() {
     };
     reader.readAsArrayBuffer(file);
   }, [groups, showToast]);
+
+  const handleSMExport = useCallback(() => {
+    const rows = groups.flatMap(g =>
+      g.items.flatMap(item =>
+        (item.serviceTypes || []).map(st => ({
+          'Group Code'       : g.id.toUpperCase(),
+          'Modality'         : g.modality,
+          'Modality ID'      : item.id,
+          'Exam Code'        : item.id,
+          'Service Type Code': st.id,
+          'Service Type Name': st.name,
+        }))
+      )
+    );
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows.length ? rows : [{}]), 'Service Types');
+    XLSX.writeFile(wb, 'service-types.xlsx');
+    showToast('Service types exported');
+  }, [groups, showToast]);
+
+  const handleSMImport = useCallback(async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    e.target.value = '';
+
+    const reader = new FileReader();
+    reader.onload = async (ev) => {
+      try {
+        const wb = XLSX.read(ev.target.result, { type: 'array' });
+        // Accept V2 "Service Types" sheet or legacy "Service Materials" sheet
+        const sheet = wb.Sheets['Service Types'] || wb.Sheets['Service Materials'];
+        if (!sheet) { showToast('Invalid file: missing "Service Types" sheet'); return; }
+
+        const rows = XLSX.utils.sheet_to_json(sheet);
+        const existingStIds = new Set(
+          groups.flatMap(g => g.items.flatMap(i => (i.serviceTypes || []).map(st => st.id)))
+        );
+        const hdrs = { 'Content-Type': 'application/json' };
+        let failed = 0;
+
+        for (const row of rows) {
+          const stCode   = String(row['Service Type Code']  || row['Service Material Code'] || '').trim();
+          const itemCode = String(row['Modality ID']        || '').trim();
+          const name     = String(row['Service Type Name']  || row['Service Material Name'] || row['Name'] || '').trim();
+          if (!stCode || !itemCode) continue;
+          const body = { serviceTypeCode: stCode, item_itemCode: itemCode, name };
+          const res = existingStIds.has(stCode)
+            ? await fetch(`/api/ModalityServiceTypes('${encodeURIComponent(stCode)}')`, { method: 'PATCH', headers: hdrs, body: JSON.stringify(body) })
+            : await fetch('/api/ModalityServiceTypes',                                   { method: 'POST',  headers: hdrs, body: JSON.stringify(body) });
+          if (!res.ok) failed++;
+        }
+
+        // Refetch and rebuild
+        const [gData, iData, sData] = await Promise.all([
+          fetch('/api/ModalityGroups').then(r => r.json()),
+          fetch('/api/ModalityGroupItems').then(r => r.json()),
+          fetch('/api/ModalityServiceTypes').then(r => r.json()),
+        ]);
+        const stByItem = {};
+        (sData.value || []).forEach(st => {
+          if (!stByItem[st.item_itemCode]) stByItem[st.item_itemCode] = [];
+          stByItem[st.item_itemCode].push({ id: st.serviceTypeCode, name: st.name });
+        });
+        const itemsByGroup = {};
+        (iData.value || []).forEach(item => {
+          if (!itemsByGroup[item.group_groupCode]) itemsByGroup[item.group_groupCode] = [];
+          itemsByGroup[item.group_groupCode].push({ id: item.itemCode, serviceTypes: stByItem[item.itemCode] || [] });
+        });
+        const fetched = (gData.value || []).map(g => ({
+          id: g.groupCode, name: g.name, modality: g.modality,
+          discount: g.discount, qtyOrig: g.qtyOrig, qtyUpdated: g.qtyUpdated,
+          finished: g.finished,
+          firstThreshVol: g.firstThreshVol, firstThreshDiscount: g.firstThreshDiscount,
+          secondThreshVol: g.secondThreshVol, secondThreshDiscount: g.secondThreshDiscount,
+          items: itemsByGroup[g.groupCode] || [],
+        }));
+        setGroups(fetched);
+        window.MODALITY_GROUPS = fetched;
+        if (failed > 0) showToast(`Import done — ${failed} row${failed !== 1 ? 's' : ''} failed`);
+        else showToast(`Imported ${rows.length} service type${rows.length !== 1 ? 's' : ''}`);
+      } catch (err) {
+        console.error(err);
+        showToast('Import failed — check file format');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }, [groups, setGroups, showToast]);
 
   // Tweaks-mode wiring
   useEffect(() => {
@@ -331,8 +401,9 @@ function App() {
   const counts = {
     tx: transactions.length,
     groups: groups.length,
-    orders: 12,
     ordersV2: ordersV2Count,
+    materials: materialsCount || undefined,
+    doctors: doctorsCount || undefined,
   };
 
   const mainClass = "main" + (tweaks.density === 'compact' ? ' compact' : '');
@@ -350,7 +421,7 @@ function App() {
       <Sidebar current={nav} onNav={(id) => {
           setNav(id);
           setNewCount(0);
-          const navToTab = { dashboard: 'all', transactions: 'feed', groups: 'groups', orders: 'monthly', ordersV2: 'ordersV2', reports: 'reports' };
+          const navToTab = { dashboard: 'all', doctors: 'doctors', transactions: 'feed', groups: 'groups', ordersV2: 'ordersV2', materials: 'materials', reports: 'reports' };
           if (navToTab[id]) setTab(navToTab[id]);
         }} counts={counts}/>
 
@@ -360,9 +431,15 @@ function App() {
         accept=".xlsx,.xls"
         style={{display: 'none'}}
         onChange={handleImport}/>
+      <input
+        ref={smImportFileRef}
+        type="file"
+        accept=".xlsx,.xls"
+        style={{display: 'none'}}
+        onChange={handleSMImport}/>
 
       <div className={mainClass}>
-        {tab !== 'feed' && tab !== 'reports' && tab !== 'ordersV2' && (
+        {tab !== 'feed' && tab !== 'reports' && tab !== 'ordersV2' && tab !== 'materials' && tab !== 'doctors' && (
           <PageHeader
             title="Radiology Operations"
             subtitle="Live from PACS-Gateway · Central Imaging Dept · Apr 22, 2026"
@@ -370,17 +447,19 @@ function App() {
             notifCount={newCount}
             liveCount={tab === 'feed' ? 0 : newCount}
             onExport={handleExport}
-            onImport={tab === 'groups' ? () => importFileRef.current?.click() : undefined}
-            onCalculateDiscount={() => showToast('Discount calculated')}/>
+            onImport={tab === 'groups' ? () => importFileRef.current?.click() : undefined}/>
         )}
 
-        {tab !== 'groups' && tab !== 'feed' && tab !== 'monthly' && tab !== 'reports' && tab !== 'ordersV2' && <KpiStrip tx={transactions} groups={groups}/>}
+        {tab !== 'groups' && tab !== 'feed' && tab !== 'reports' && tab !== 'ordersV2' && tab !== 'materials' && tab !== 'doctors' && <KpiStrip tx={transactions} groups={groups}/>}
 
         {tab === 'reports' && <div style={{flex: 1}}/>}
 
         {tab === 'ordersV2' && (
           <AggregationV2 onToast={showToast} onOrderSaved={() => setOrdersV2Count(c => c + 1)} onOrderDeleted={() => setOrdersV2Count(c => c - 1)}/>
         )}
+
+        {tab === 'materials' && <Materials onToast={showToast}/>}
+        {tab === 'doctors'   && <Doctors onToast={showToast}/>}
 
         {(tab === 'all' || tab === 'feed') && (
           <div style={{marginBottom: tab === 'all' ? 16 : 0}}>
@@ -390,21 +469,18 @@ function App() {
               liveSync={tweaks.liveSync}
               showArabic={tweaks.showArabic}
               onImport={(newTxs) => setTransactions(prev => [...newTxs, ...prev])}
+              onDelete={(ids) => setTransactions(prev => prev.filter(t => !ids.has(t.id)))}
               onToast={showToast}/>
           </div>
         )}
 
-        {(tab === 'all' || tab === 'groups' || tab === 'monthly') && (
-          <div className={tab === 'all' ? 'panels' : ''} style={tab === 'all' ? {} : {}}>
-            {(tab === 'all' || tab === 'monthly') && (
-              <Aggregation transactions={transactions} onToast={showToast} readOnly={tab === 'all'} groups={groups} onUpdateGroup={(g) => setGroups(gs => gs.map(x => x.id === g.id ? g : x))}/>
-            )}
-            {(tab === 'all' || tab === 'groups') && (
-              <div style={tab === 'all' ? {} : {marginTop: 0}}>
-                <ModalityGroups groups={groups} setGroups={setGroups} readOnly={tab === 'all' || tab === 'groups'}/>
-              </div>
-            )}
-          </div>
+        {tab === 'groups' && (
+          <ModalityGroups
+            groups={groups} setGroups={setGroups}
+            readOnly={tab === 'all' || tab === 'groups'}
+            onToast={showToast}
+            onSMExport={handleSMExport}
+            onSMImport={() => smImportFileRef.current?.click()}/>
         )}
       </div>
 

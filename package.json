@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "MedSync Medical Synchronization Platform – SAP CAP v9 application",
   "dependencies": {
-    "@sap/cds": "^9",
     "@sap-cloud-sdk/connectivity": "^4",
     "@sap-cloud-sdk/http-client": "^4",
-    "@sap-cloud-sdk/resilience": "^4"
+    "@sap-cloud-sdk/resilience": "^4",
+    "@sap/cds": "^9",
+    "dotenv": "^17.4.2"
   },
   "devDependencies": {
     "@cap-js/sqlite": "^2",
@@ -18,6 +19,7 @@
     "build": "cds build/all",
     "test": "jest --testPathPattern=test/",
     "deploy": "cds deploy --to sqlite:db/medsync.db",
+    "seed": "node scripts/seed.js",
     "lint": "eslint srv/ --ext .js"
   },
   "cds": {

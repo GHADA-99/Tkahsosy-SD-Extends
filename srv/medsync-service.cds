@@ -18,17 +18,11 @@ service MedSyncService {
     };
 
   // ─── Doctors ─────────────────────────────────────────────────────────────────
-  @odata.draft.enabled
-  @requires: ['doctor', 'admin']
   @Capabilities: {
-    SearchRestrictions: { Searchable: true },
     FilterRestrictions: { Filterable: true },
     SortRestrictions  : { Sortable: true }
   }
-  entity Doctors as projection on medsync.Doctors
-    actions {
-      action deactivateDoctor() returns Doctors;
-    };
+  entity Doctors as projection on medsync.Doctors;
 
   // ─── DoctorPatient relationship ──────────────────────────────────────────────
   @requires: ['doctor', 'admin']
@@ -77,10 +71,6 @@ service MedSyncService {
   }
   entity AuditLogs as projection on medsync.AuditLogs;
 
-  // ─── SalesOrders ──────────────────────────────────────────────────────────────
-  entity SalesOrders     as projection on medsync.SalesOrders;
-  entity SalesOrderItems as projection on medsync.SalesOrderItems;
-
   // ─── SalesOrders V2 ───────────────────────────────────────────────────────────
   entity SalesOrdersV2     as projection on medsync.SalesOrdersV2;
   entity SalesOrderItemsV2 as projection on medsync.SalesOrderItemsV2;
@@ -101,6 +91,13 @@ service MedSyncService {
   entity ModalityGroups        as projection on medsync.ModalityGroups;
   entity ModalityGroupItems    as projection on medsync.ModalityGroupItems;
   entity ModalityServiceTypes  as projection on medsync.ModalityServiceTypes;
+
+  // ─── Materials ────────────────────────────────────────────────────────────────
+  @Capabilities: {
+    FilterRestrictions: { Filterable: true },
+    SortRestrictions  : { Sortable: true }
+  }
+  entity Materials as projection on medsync.Materials;
 
   // ─── Functions ────────────────────────────────────────────────────────────────
   @requires: ['admin']
@@ -131,4 +128,7 @@ service MedSyncService {
   // Cleanup action
   @requires: ['admin']
   action cleanupOldNotifications() returns { deleted: Integer };
+
+  // S/4HANA SOAP proxy – posts a fixed Journal Entry to the cloud tenant
+  action postAccountingDocument() returns { success: Boolean; message: String; accountingDocumentId: String };
 }

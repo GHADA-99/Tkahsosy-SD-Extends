@@ -14,10 +14,12 @@ function fmtDMY(d) {
   return `${dd}-${mm}-${d.getFullYear()}`;
 }
 
-function TransactionFeed({ transactions, filters, setFilters, liveSync, showArabic, onImport = () => {}, onToast = () => {} }) {
+function TransactionFeed({ transactions, filters, setFilters, liveSync, showArabic, onImport = () => {}, onDelete = () => {}, onToast = () => {} }) {
   const [page, setPage] = useState(1);
   const pageSize = 8;
   const fileInputRef = useRef(null);
+  const [selected, setSelected] = useState(new Set());
+  const [deleting, setDeleting] = useState(false);
 
   const filtered = useMemo(() => {
     return transactions.filter(t => {
@@ -38,6 +40,41 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   const modChips = ['all', ...MODALITIES.map(m => m.code)];
+
+  // ── Selection helpers ────────────────────────────────────────────────────────
+  const pagedIds       = paged.map(t => t.id);
+  const allPageSel     = pagedIds.length > 0 && pagedIds.every(id => selected.has(id));
+  const somePageSel    = pagedIds.some(id => selected.has(id));
+
+  const toggleRow = (id) => setSelected(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
+
+  const togglePage = () => {
+    setSelected(prev => {
+      const next = new Set(prev);
+      if (allPageSel) pagedIds.forEach(id => next.delete(id));
+      else            pagedIds.forEach(id => next.add(id));
+      return next;
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    setDeleting(true);
+    let failed = 0;
+    for (const id of selected) {
+      const res = await fetch(`/api/Transactions('${encodeURIComponent(id)}')`, { method: 'DELETE' });
+      if (!res.ok) failed++;
+    }
+    const count = selected.size;
+    onDelete(new Set(selected));
+    setSelected(new Set());
+    setDeleting(false);
+    if (failed === 0) onToast(`Deleted ${count} transaction${count !== 1 ? 's' : ''}`);
+    else              onToast(`Done — ${failed} record${failed !== 1 ? 's' : ''} failed to delete`);
+  };
 
   const handleImport = async (e) => {
     const file = e.target.files[0];
@@ -66,12 +103,18 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
         : new Date();
       const payload = {
         transactionId  : String(r['Transaction ID']),
-        examCode       : String(r['Exam Code']          || ''),
+        serviceMaterial: String(r['Service Material (Exam Code)'] || ''),
         examNameEn     : String(r['Description (EN)']   || ''),
         examNameAr     : String(r['Description (AR)']   || ''),
         modality       : String(r['Modality']           || ''),
         price          : Number(r['Price (SAR)'])        || 0,
         transactionDate: txDate.toISOString(),
+        otherNmType    : String(r['Other NM Type']       || ''),
+        salesOffice    : String(r['Hospital']        || ''),
+        cost           : Number(r['Cost (SAR)'])         || 0,
+        discount       : Number(r['Discount (%)'])       || 0,
+        radiologist    : String(r['Radiologist']         || ''),
+        room           : String(r['Room']                || ''),
       };
       try {
         const res = await fetch('/api/Transactions', {
@@ -81,7 +124,7 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
         });
         if (res.ok) saved++;
       } catch (_) {}
-      imported.push({ id: payload.transactionId, code: payload.examCode, en: payload.examNameEn, ar: payload.examNameAr, mod: payload.modality, price: payload.price, date: txDate, isNew: true });
+      imported.push({ id: payload.transactionId, code: payload.serviceMaterial, en: payload.examNameEn, ar: payload.examNameAr, mod: payload.modality, price: payload.price, date: txDate, otherNmType: payload.otherNmType, salesOffice: payload.salesOffice, cost: payload.cost, discount: payload.discount, radiologist: payload.radiologist, room: payload.room, isNew: true });
     }
 
     onImport(imported);
@@ -91,12 +134,18 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
   const exportToExcel = () => {
     const rows = filtered.map(t => ({
       'Transaction ID'  : t.id,
-      'Exam Code'       : t.code,
-      'Description (EN)': t.en,
-      'Description (AR)': t.ar,
-      'Modality'        : t.mod,
-      'Price (SAR)'     : t.price,
-      'Date'            : fmtDMY(t.date),
+      'Service Material (Exam Code)': t.code,
+      'Description (EN)'           : t.en,
+      'Description (AR)'           : t.ar,
+      'Modality'                   : t.mod,
+      'Price (SAR)'                : t.price,
+      'Date'                       : fmtDMY(t.date),
+      'Other NM Type'              : t.otherNmType || '',
+      'Hospital'    : t.salesOffice    || '',
+      'Cost (SAR)'      : t.cost           ?? '',
+      'Discount (%)'    : t.discount       ?? '',
+      'Radiologist'     : t.radiologist    || '',
+      'Room'            : t.room           || '',
     }));
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -139,24 +188,61 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
         <button className="btn sm" onClick={exportToExcel} style={{display: 'inline-flex', alignItems: 'center', gap: 5}}>
           <I.Download size={13}/> Export
         </button>
+        {selected.size > 0 && (
+          <button
+            className="btn sm"
+            onClick={handleDeleteSelected}
+            disabled={deleting}
+            style={{display: 'inline-flex', alignItems: 'center', gap: 5,
+              color: 'var(--rose)',
+              borderColor: 'color-mix(in oklab, var(--rose) 40%, var(--border))'}}
+          >
+            {deleting
+              ? <><span style={{width:6,height:6,borderRadius:'50%',background:'currentColor',display:'inline-block',opacity:.5}}/> Deleting…</>
+              : <><I.Trash size={13}/> Delete ({selected.size})</>}
+          </button>
+        )}
       </div>
 
       <div className="table-wrap">
         <table className="table">
           <thead>
             <tr>
+              <th style={{width: 36, textAlign: 'center'}}>
+                <input
+                  type="checkbox"
+                  checked={allPageSel}
+                  ref={el => { if (el) el.indeterminate = somePageSel && !allPageSel; }}
+                  onChange={togglePage}
+                  style={{cursor: 'pointer', accentColor: 'var(--accent)'}}
+                />
+              </th>
               <th style={{width: 104}}>ID</th>
-              <th style={{width: 126}}>Exam Code</th>
+              <th style={{width: 160}}>Service Material (Exam Code)</th>
               <th>Description</th>
               <th style={{width: 100}}>Modality</th>
               <th className="num" style={{width: 110}}>Price (ex. tax)</th>
               <th style={{width: 130}}>Date</th>
+              <th style={{width: 150}}>Other NM Type</th>
+              <th style={{width: 140}}>Hospital</th>
+              <th className="num" style={{width: 110}}>Cost (SAR)</th>
+              <th className="num" style={{width: 90}}>Discount</th>
+              <th style={{width: 150}}>Radiologist</th>
+              <th style={{width: 130}}>Room</th>
               <th style={{width: 36}}></th>
             </tr>
           </thead>
           <tbody>
             {paged.map(t => (
-              <tr key={t.id} className={t.isNew ? 'is-new' : ''}>
+              <tr key={t.id} className={t.isNew ? 'is-new' : ''} style={selected.has(t.id) ? {background: 'color-mix(in oklab, var(--accent) 6%, transparent)'} : {}}>
+                <td style={{textAlign: 'center'}}>
+                  <input
+                    type="checkbox"
+                    checked={selected.has(t.id)}
+                    onChange={() => toggleRow(t.id)}
+                    style={{cursor: 'pointer', accentColor: 'var(--accent)'}}
+                  />
+                </td>
                 <td>
                   <span className="id-badge"><span className="hash">#</span>{t.id.replace('TX-','')}</span>
                 </td>
@@ -168,13 +254,34 @@ function TransactionFeed({ transactions, filters, setFilters, liveSync, showArab
                 <td><ModChip code={t.mod}/></td>
                 <td className="num"><span className="mono">﷼ {t.price.toLocaleString()}</span></td>
                 <td className="muted mono" style={{fontSize: 12}}>{fmtDMY(t.date)}</td>
+                <td style={{color: 'var(--ink-2)', fontSize: 12}}>{t.otherNmType || <span style={{color:'var(--muted)'}}>—</span>}</td>
+                <td style={{fontSize: 12}}>{t.salesOffice || <span style={{color:'var(--muted)'}}>—</span>}</td>
+                <td className="num">
+                  {t.cost != null
+                    ? <span className="mono">﷼ {t.cost.toLocaleString()}</span>
+                    : <span style={{color:'var(--muted)'}}>—</span>}
+                </td>
+                <td className="num">
+                  {t.discount != null
+                    ? <span style={{
+                        display:'inline-flex', alignItems:'center',
+                        padding:'2px 7px', borderRadius:999,
+                        fontSize:11, fontWeight:600,
+                        background: t.discount > 0 ? 'var(--emerald-50)' : 'var(--surface-2)',
+                        color: t.discount > 0 ? '#047857' : 'var(--muted)',
+                        border: `1px solid ${t.discount > 0 ? 'color-mix(in oklab,var(--emerald) 25%,transparent)' : 'var(--border)'}`,
+                      }}>{t.discount}%</span>
+                    : <span style={{color:'var(--muted)'}}>—</span>}
+                </td>
+                <td style={{fontSize: 12}}>{t.radiologist || <span style={{color:'var(--muted)'}}>—</span>}</td>
+                <td style={{fontSize: 12}}>{t.room || <span style={{color:'var(--muted)'}}>—</span>}</td>
                 <td>
                   <button className="icon-btn" style={{width: 28, height: 28}} title="More"><I.MoreH size={14}/></button>
                 </td>
               </tr>
             ))}
             {paged.length === 0 && (
-              <tr><td colSpan="7" style={{textAlign: 'center', padding: '40px 0', color: 'var(--muted)'}}>
+              <tr><td colSpan="14" style={{textAlign: 'center', padding: '40px 0', color: 'var(--muted)'}}>
                 No transactions match these filters.
               </td></tr>
             )}

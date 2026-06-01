@@ -38,11 +38,12 @@ function TopBar({ notifCount, onToggleTheme, dark }) {
 
 function Sidebar({ current, onNav, counts }) {
   const primary = [
-    { id: 'dashboard',    label: 'Dashboard',       icon: I.Home },
-    { id: 'transactions', label: 'Transactions',    icon: I.Activity, count: counts.tx },
-    { id: 'groups',       label: 'Modality Groups', icon: I.Layers,   count: counts.groups },
-    { id: 'orders',       label: 'Service Orders',    icon: I.Clipboard, count: counts.orders },
-    { id: 'ordersV2',    label: 'Service Orders V2', icon: I.Clipboard, count: counts.ordersV2 },
+    { id: 'dashboard',    label: 'Dashboard',        icon: I.Home },
+    { id: 'doctors',      label: 'Doctors',          icon: I.Users,     count: counts.doctors },
+    { id: 'transactions', label: 'Transactions',     icon: I.Activity,  count: counts.tx },
+    { id: 'groups',       label: 'Modality Groups',  icon: I.Layers,    count: counts.groups },
+    { id: 'ordersV2',     label: 'Service Orders V2',icon: I.Clipboard, count: counts.ordersV2 },
+    { id: 'materials',    label: 'Materials',        icon: I.Package,   count: counts.materials },
     { id: 'reports',      label: 'Reports',          icon: I.BarChart },
   ];
   const secondary = [
@@ -75,20 +76,19 @@ function Sidebar({ current, onNav, counts }) {
   );
 }
 
-function PageHeader({ title, subtitle, tab, onTab, notifCount, liveCount, onExport, onImport, onCalculateDiscount }) {
+function PageHeader({ title, subtitle, tab, onTab, notifCount, liveCount, onExport, onImport }) {
   return (
     <div className="page-head">
-      {tab !== 'groups' && tab !== 'monthly' && <div className="page-title">
+      {tab !== 'groups' && <div className="page-title">
         <h1>{title}</h1>
         <p>{subtitle}</p>
       </div>}
       <div className="spacer"/>
-      {tab !== 'groups' && tab !== 'monthly' && <div className="tabs" role="tablist">
+      {tab !== 'groups' && <div className="tabs" role="tablist">
         {[
-          { id: 'all',     label: 'All Panels', live: true },
-          { id: 'feed',    label: 'Live Feed', badge: liveCount },
-          { id: 'groups',  label: 'Modality Groups' },
-          { id: 'monthly', label: 'Monthly Aggregation' },
+          { id: 'all',    label: 'All Panels', live: true },
+          { id: 'feed',   label: 'Live Feed', badge: liveCount },
+          { id: 'groups', label: 'Modality Groups' },
         ].map(t => (
           <button key={t.id} className="tab" role="tab" aria-selected={tab === t.id} onClick={() => onTab(t.id)}>
             {t.live && <span className="dot"/>}
@@ -99,11 +99,6 @@ function PageHeader({ title, subtitle, tab, onTab, notifCount, liveCount, onExpo
           </button>
         ))}
       </div>}
-      {tab === 'monthly' && (
-        <button className="btn primary sm" onClick={onCalculateDiscount} style={{display: 'inline-flex', alignItems: 'center', gap: 6}}>
-          <I.Zap size={14}/> Calculate Discount
-        </button>
-      )}
       {onImport && (
         <button className="btn" onClick={onImport}><I.Upload size={14}/> Import</button>
       )}
@@ -114,7 +109,7 @@ function PageHeader({ title, subtitle, tab, onTab, notifCount, liveCount, onExpo
 
 function KpiStrip({ tx, groups }) {
   const total = tx.length;
-  const today = tx.filter(t => sameDay(t.date, new Date(2026, 3, 22))).length;
+  const today = tx.filter(t => sameDay(t.date, new Date())).length;
   const revenue = tx.reduce((a, t) => a + t.price, 0);
   const finishedGroups = groups.filter(g => g.finished).length;
 
@@ -122,7 +117,6 @@ function KpiStrip({ tx, groups }) {
     { label: 'Transactions · Today',  value: today, unit: 'cases', trend: '+12%', up: true, spark: [4,7,5,9,8,12,11,14,13,16] },
     { label: 'Live Queue',            value: total, unit: 'total', trend: '+3 new', up: true, spark: [20,22,21,24,26,28,27,30,32,34] },
     { label: 'Revenue (ex. tax)',     value: `﷼ ${(revenue/1000).toFixed(1)}k`, unit: 'this month', trend: '+8.4%', up: true, spark: [10,14,13,17,18,22,24,28,30,34] },
-    { label: 'Modality Groups',       value: `${finishedGroups}/${groups.length}`, unit: 'finished', trend: '2 closing', up: false, spark: [2,2,3,3,4,4,4,5,5,5] },
   ];
   return (
     <div className="kpi-row">

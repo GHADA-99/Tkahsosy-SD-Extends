@@ -1,0 +1,29 @@
+serviceTypeCode,item_itemCode,name
+CT-CHEST-C,MI-CT-01,CT Chest with Contrast
+CT-CHEST-NC,MI-CT-01,CT Chest without Contrast
+CT-ABD-NC,MI-CT-02,CT Abdomen without Contrast
+CT-ABD-C,MI-CT-02,CT Abdomen with Contrast
+CT-HEAD-NC,MI-CT-03,CT Brain without Contrast
+CT-HEAD-C,MI-CT-03,CT Brain with Contrast
+CT-SPINE-L,MI-CT-04,CT Lumbar Spine
+CT-SPINE-C,MI-CT-04,CT Cervical Spine
+MRI-BRAIN-C,MI-MRI-01,MRI Brain with Contrast
+MRI-BRAIN-NC,MI-MRI-01,MRI Brain without Contrast
+MRI-KNEE-R,MI-MRI-02,MRI Right Knee
+MRI-KNEE-L,MI-MRI-02,MRI Left Knee
+MRI-SPINE-C,MI-MRI-03,MRI Cervical Spine
+MRI-SPINE-L,MI-MRI-03,MRI Lumbar Spine
+MRI-ABD-C,MI-MRI-04,MRI Abdomen with Contrast
+MRI-ABD-NC,MI-MRI-04,MRI Abdomen without Contrast
+XR-CHEST-PA,MI-XR-01,Chest X-Ray PA View
+XR-CHEST-LAT,MI-XR-01,Chest X-Ray Lateral View
+XR-KNEE-AP,MI-XR-02,Knee X-Ray AP and Lateral
+XR-KNEE-SUN,MI-XR-02,Knee X-Ray Sunrise View
+XR-HAND-R,MI-XR-03,Right Hand X-Ray
+XR-HAND-L,MI-XR-03,Left Hand X-Ray
+US-ABD-FULL,MI-US-01,Abdominal Ultrasound Full
+US-ABD-UPPER,MI-US-01,Abdominal Ultrasound Upper
+US-PELVIC-T,MI-US-02,Transvaginal Ultrasound
+US-PELVIC-A,MI-US-02,Transabdominal Ultrasound
+US-THYR,MI-US-03,Thyroid Ultrasound
+US-THYR-DOPP,MI-US-03,Thyroid Doppler Ultrasound

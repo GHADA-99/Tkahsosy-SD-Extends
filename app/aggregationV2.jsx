@@ -14,7 +14,9 @@ function buildModalityGroupings(transactions) {
 
   const codeToGroup = {};
   MG.forEach(mg => {
-    (mg.items || []).forEach(item => { codeToGroup[item.code] = mg; });
+    (mg.items || []).forEach(item => {
+      (item.serviceTypes || []).forEach(st => { codeToGroup[st.id] = mg; });
+    });
   });
 
   const groupMap  = {};
@@ -58,6 +60,40 @@ function buildModalityGroupings(transactions) {
   });
 
   return result;
+}
+
+// Groups transactions by exam code (serviceMaterial).
+// Each entry inherits threshold/discount settings from the parent ModalityGroup.
+function buildExamCodeGroupings(transactions) {
+  const MG = window.MODALITY_GROUPS || [];
+
+  const codeToGroup = {};
+  MG.forEach(mg => {
+    (mg.items || []).forEach(item => {
+      (item.serviceTypes || []).forEach(st => { codeToGroup[st.id] = mg; });
+    });
+  });
+
+  const examMap = new Map();
+  transactions.forEach(t => {
+    if (!examMap.has(t.code)) {
+      const mg = codeToGroup[t.code];
+      examMap.set(t.code, {
+        id                  : t.code,
+        name                : t.en || t.code,
+        modality            : t.mod || modalityFromCode(t.code),
+        discount            : mg?.discount            || 0,
+        firstThreshVol      : mg?.firstThreshVol      || 0,
+        firstThreshDiscount : mg?.firstThreshDiscount || 0,
+        secondThreshVol     : mg?.secondThreshVol     || 0,
+        secondThreshDiscount: mg?.secondThreshDiscount|| 0,
+        txns                : [],
+      });
+    }
+    examMap.get(t.code).txns.push(t);
+  });
+
+  return [...examMap.values()];
 }
 
 // Builds a per-transaction discount map and summary rows for the discount card.
@@ -240,7 +276,7 @@ function AggregationV2({ onToast, onOrderSaved = () => {}, onOrderDeleted = () =
       .then(r => r.json())
       .then(data => {
         const mapped = (data.value || []).map(t => ({
-          id: t.transactionId, code: t.examCode, en: t.examNameEn,
+          id: t.transactionId, code: t.serviceMaterial, en: t.examNameEn,
           ar: t.examNameAr, mod: t.modality, price: t.price,
           date: new Date(t.transactionDate),
         }));
@@ -424,7 +460,7 @@ function ServiceOrderV2Overview({ orders, loading, onCreateClick, onViewOrder, o
 
 // ── Shared: modality-group accordion renderer ─────────────────────────────────
 // discountMap is keyed by transaction ID (t.id)
-function ModalityGroupList({ groupings, openId, setOpenId, discountApplied, discountMap, savedOrder }) {
+function ModalityGroupList({ groupings, openId, setOpenId, discountApplied, discountMap, savedOrder, examMode }) {
   if (groupings.length === 0) return null;
 
   return (
@@ -450,6 +486,15 @@ function ModalityGroupList({ groupings, openId, setOpenId, discountApplied, disc
               {mg.modality ? <ModChip code={mg.modality}/> : <span style={{width: 6}}/>}
               <div className="code-wrap">
                 <div className="code-main">
+                  {examMode && (
+                    <span style={{
+                      fontFamily: "'JetBrains Mono', monospace", fontSize: 11, fontWeight: 700,
+                      color: 'var(--accent-700)',
+                      background: 'color-mix(in oklab, var(--accent) 8%, transparent)',
+                      border: '1px solid color-mix(in oklab, var(--accent) 22%, var(--border))',
+                      padding: '1px 7px', borderRadius: 4, marginRight: 7,
+                    }}>{mg.id}</span>
+                  )}
                   <span style={{fontSize: 13, fontWeight: 600, color: 'var(--ink)'}}>{mg.name}</span>
                 </div>
               </div>
@@ -537,6 +582,8 @@ function ServiceOrderV2View({ order, onBack, onToast }) {
   const [discountApplied, setDiscountApplied] = useState(false);
   const [discountMap,     setDiscountMap]     = useState({});  // { txnId: pct }
   const [savingDiscount,  setSavingDiscount]  = useState(false);
+  const [posting,         setPosting]         = useState(false);
+  const [accountingDocId, setAccountingDocId] = useState(order.accountingDocumentId || null);
 
   useEffect(() => {
     const filter = encodeURIComponent(`salesOrder_salesOrderId eq '${order.salesOrderId}'`);
@@ -559,13 +606,13 @@ function ServiceOrderV2View({ order, onBack, onToast }) {
 
   const transactions = useMemo(() =>
     items.map(i => ({
-      id: i.transactionId || i.itemId, code: i.examCode,
-      en: i.examNameEn, ar: '', mod: modalityFromCode(i.examCode),
+      id: i.transactionId || i.itemId, code: i.serviceMaterial,
+      en: i.examNameEn, ar: '', mod: modalityFromCode(i.serviceMaterial),
       price: i.price, date: new Date(i.transactionDate),
     })),
   [items]);
 
-  const groupings   = useMemo(() => buildModalityGroupings(transactions), [transactions]);
+  const groupings   = useMemo(() => buildExamCodeGroupings(transactions), [transactions]);
   const totalAmount = useMemo(() => transactions.reduce((a, t) => a + t.price, 0), [transactions]);
 
   const discountedTotal = useMemo(() => {
@@ -593,8 +640,37 @@ function ServiceOrderV2View({ order, onBack, onToast }) {
     });
   }, [groupings, discountMap, discountApplied]);
 
+  const handlePostAccounting = async () => {
+    if (posting) return;
+    setPosting(true);
+    onToast('Posting accounting document…');
+    try {
+      const res  = await fetch('/api/postAccountingDocument', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const json = await res.json();
+      const success = json.success || (json.value && json.value.success);
+      const docId   = json.accountingDocumentId || (json.value && json.value.accountingDocumentId);
+      if (success) {
+        if (docId) {
+          setAccountingDocId(docId);
+          await fetch(`/api/SalesOrdersV2('${order.salesOrderId}')`, {
+            method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accountingDocumentId: docId }),
+          }).catch(() => {});
+        }
+        onToast(`Accounting document ${docId || ''} posted for ${order.salesOrderId}`);
+      } else {
+        const msg = (json.value && json.value.message) || json.message || 'Unknown error';
+        onToast(`Post failed: ${msg}`);
+      }
+    } catch (err) {
+      onToast('Post failed: network error');
+    } finally {
+      setPosting(false);
+    }
+  };
+
   const handleCalculateDiscount = async () => {
-    const { txnMap, summaryRows } = buildGroupDiscountMap(groupings);
+    const { txnMap, summaryRows } = buildGroupDiscountMap(buildModalityGroupings(transactions));
     const discTotal = transactions.reduce((a, t) => a + Math.round(t.price * (1 - (txnMap[t.id] || 0) / 100)), 0);
 
     setSavingDiscount(true);
@@ -676,6 +752,16 @@ function ServiceOrderV2View({ order, onBack, onToast }) {
             ? <><span style={{width:6,height:6,borderRadius:'50%',background:'currentColor',display:'inline-block',opacity:.5}}/> Saving…</>
             : <><I.Zap size={14}/> Calculate Discount</>}
         </button>
+        <button
+          className="btn sm"
+          onClick={handlePostAccounting}
+          disabled={posting}
+          style={{display: 'inline-flex', alignItems: 'center', gap: 6}}
+        >
+          {posting
+            ? <><span style={{width:6,height:6,borderRadius:'50%',background:'currentColor',display:'inline-block',opacity:.5}}/> Posting…</>
+            : <><I.File size={14}/> Post Accounting Document</>}
+        </button>
       </div>
 
       {/* ── Order meta ── */}
@@ -686,6 +772,7 @@ function ServiceOrderV2View({ order, onBack, onToast }) {
           {[
             { label: 'Sales Order ID', val: order.salesOrderId, copy: true },
             { label: 'ERP ID', val: order.erpSalesOrderId || '—', copy: !!order.erpSalesOrderId },
+            { label: 'Accounting Document ID', val: accountingDocId || '—', copy: !!accountingDocId },
           ].map(f => (
             <div key={f.label} style={{display: 'flex', alignItems: 'center', gap: 6}}>
               <span style={{fontSize: 11, color: 'var(--muted)', fontWeight: 500}}>{f.label}</span>
@@ -721,6 +808,7 @@ function ServiceOrderV2View({ order, onBack, onToast }) {
         <ModalityGroupList
           groupings={groupings} openId={openId} setOpenId={setOpenId}
           discountApplied={discountApplied} discountMap={discountMap} savedOrder={true}
+          examMode={true}
         />
       </div>
     </div>
@@ -734,9 +822,11 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
   const [savedOrder,      setSavedOrder]      = useState(null);
   const [discountApplied, setDiscountApplied] = useState(false);
   const [discountMap,     setDiscountMap]     = useState({});  // { txnId: pct }
+  const [posting,         setPosting]         = useState(false);
+  const [accountingDocId, setAccountingDocId] = useState(null);
 
   const monthLabel  = 'May 2026';
-  const groupings   = useMemo(() => buildModalityGroupings(transactions), [transactions]);
+  const groupings   = useMemo(() => buildExamCodeGroupings(transactions), [transactions]);
   const totalAmount = transactions.reduce((a, t) => a + t.price, 0);
 
   const discountedTotal = useMemo(() => {
@@ -765,10 +855,42 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
   }, [groupings, discountMap, discountApplied]);
 
   const handleCalculateDiscount = () => {
-    const { txnMap } = buildGroupDiscountMap(groupings);
+    const { txnMap } = buildGroupDiscountMap(buildModalityGroupings(transactions));
     setDiscountMap(txnMap);
     setDiscountApplied(true);
     onToast('Discount calculated for May 2026');
+  };
+
+  const handlePostAccounting = async () => {
+    if (posting) return;
+    setPosting(true);
+    onToast('Posting accounting document…');
+    try {
+      const res  = await fetch('/api/postAccountingDocument', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const json = await res.json();
+      const success = json.success || (json.value && json.value.success);
+      const docId   = json.accountingDocumentId || (json.value && json.value.accountingDocumentId);
+      if (success) {
+        if (docId) {
+          setAccountingDocId(docId);
+          if (savedOrder) {
+            await fetch(`/api/SalesOrdersV2('${savedOrder.salesOrderId}')`, {
+              method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ accountingDocumentId: docId }),
+            }).catch(() => {});
+            setSavedOrder(prev => ({ ...prev, accountingDocumentId: docId }));
+          }
+        }
+        onToast(`Accounting document ${docId || ''} posted successfully`);
+      } else {
+        const msg = (json.value && json.value.message) || json.message || 'Unknown error';
+        onToast(`Post failed: ${msg}`);
+      }
+    } catch (err) {
+      onToast('Post failed: network error');
+    } finally {
+      setPosting(false);
+    }
   };
 
   const handleSave = async () => {
@@ -778,10 +900,12 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
     const finalAmount  = discountApplied ? discountedTotal : totalAmount;
 
     try {
-      await fetch('/api/SalesOrdersV2', {
+      const headerRes = await fetch('/api/SalesOrdersV2', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ salesOrderId, month: monthLabel, status: 'draft', totalAmount: finalAmount }),
       });
+      if (!headerRes.ok) throw new Error(`Header POST failed: ${headerRes.status}`);
+
       await Promise.all(transactions.map(t => {
         const pct = discountMap[t.id] || 0;
         return fetch('/api/SalesOrderItemsV2', {
@@ -790,16 +914,21 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
             itemId                 : `${salesOrderId}-${t.id}`,
             salesOrder_salesOrderId: salesOrderId,
             transactionId          : t.id,
-            examCode               : t.code,
+            serviceMaterial        : t.code,
             examNameEn             : t.en,
             price                  : t.price,
             transactionDate        : t.date.toISOString(),
             discountPct            : pct,
             discountedPrice        : discountApplied ? Math.round(t.price * (1 - pct / 100)) : t.price,
           }),
-        }).catch(() => {});
+        });
       }));
-    } catch (_) {}
+    } catch (err) {
+      console.error('[ServiceOrderV2] Save failed:', err.message);
+      onToast('Failed to save — check server connection and try again');
+      setSaving(false);
+      return;
+    }
 
     setSaving(false);
     const order = { salesOrderId, erpSalesOrderId: 'Pending...', month: monthLabel, status: 'pending', totalAmount: finalAmount };
@@ -871,6 +1000,16 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
           <I.Zap size={14}/> Calculate Discount
         </button>
         <button
+          className="btn sm"
+          onClick={handlePostAccounting}
+          disabled={posting}
+          style={{display: 'inline-flex', alignItems: 'center', gap: 6}}
+        >
+          {posting
+            ? <><span style={{width:6,height:6,borderRadius:'50%',background:'currentColor',display:'inline-block',opacity:.5}}/> Posting…</>
+            : <><I.File size={14}/> Post Accounting Document</>}
+        </button>
+        <button
           className="btn primary sm"
           onClick={handleSave}
           disabled={saving || !!savedOrder}
@@ -902,7 +1041,7 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
             </span>
           </div>
           <div style={{display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap'}}>
-            {[{ label: 'Sales Order ID', val: savedOrder.salesOrderId }, { label: 'ERP ID', val: savedOrder.erpSalesOrderId }].map(f => (
+            {[{ label: 'Sales Order ID', val: savedOrder.salesOrderId }, { label: 'ERP ID', val: savedOrder.erpSalesOrderId }, { label: 'Accounting Document ID', val: accountingDocId || '—' }].map(f => (
               <div key={f.label} style={{display: 'flex', alignItems: 'center', gap: 6}}>
                 <span style={{fontSize: 11, color: 'var(--muted)', fontWeight: 500}}>{f.label}</span>
                 <span style={{fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:'var(--ink)',
@@ -925,6 +1064,7 @@ function ServiceOrderV2Create({ transactions, onBack, onSaved, onToast }) {
         <ModalityGroupList
           groupings={groupings} openId={openId} setOpenId={setOpenId}
           discountApplied={discountApplied} discountMap={discountMap} savedOrder={savedOrder}
+          examMode={true}
         />
       </div>
     </div>

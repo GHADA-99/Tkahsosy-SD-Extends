@@ -24,18 +24,10 @@ entity Patients : cuid, managed {
 }
 
 entity Doctors : cuid, managed {
-  firstName       : String(100) not null;
-  lastName        : String(100) not null;
-  specialization  : String(200);
-  licenseNumber   : String(100);
-  email           : String(255);
-  phone           : String(30);
-  department      : String(200);
-  availability    : String(500);
-  isActive        : Boolean default true;
-  patients        : Association to many DoctorPatient on patients.doctor = $self;
-  appointments    : Association to many Appointments on appointments.doctor = $self;
-  medicalRecords  : Association to many MedicalRecords on medicalRecords.doctor = $self;
+  employeeId   : String(50);
+  employeeName : String(200);
+  employeeType : String(100);
+  
 }
 
 entity DoctorPatient : cuid, managed {
@@ -99,49 +91,36 @@ entity AuditLogs : cuid, managed {
 
 entity Transactions : managed {
   key transactionId   : String(20)  not null;
-      examCode        : String(50)  not null;
+      serviceMaterial : String(50)  not null;
       examNameEn      : String(200) not null;
       examNameAr      : String(200);
       modality        : String(10)  not null;
       price           : Integer     not null;
       transactionDate : DateTime    not null;
-}
-
-entity SalesOrders : managed {
-  key salesOrderId    : String(20)  not null;
-      erpSalesOrderId : String(50);
-      examCode        : String(50);
-      month           : String(20);
-      status          : String(50)  default 'draft';
-      totalAmount     : Integer     default 0;
-      items           : Association to many SalesOrderItems on items.salesOrder = $self;
-}
-
-entity SalesOrderItems : managed {
-  key itemId          : String(50)  not null;
-      salesOrder      : Association to SalesOrders not null;
-      transactionId   : String(20);
-      examCode        : String(50);
-      examNameEn      : String(200);
-      price           : Integer;
-      transactionDate : DateTime;
+      otherNmType     : String(100);
+      salesOffice     : String(100);
+      cost            : Integer;
+      discount        : Integer;
+      radiologist     : String(200);
+      room            : String(100);
 }
 
 entity SalesOrdersV2 : managed {
-  key salesOrderId    : String(20)  not null;
-      erpSalesOrderId : String(50);
-      examCode        : String(50);
-      month           : String(20);
-      status          : String(50)  default 'draft';
-      totalAmount     : Integer     default 0;
-      items           : Association to many SalesOrderItemsV2 on items.salesOrder = $self;
+  key salesOrderId         : String(20)  not null;
+      erpSalesOrderId      : String(50);
+      accountingDocumentId : String(50);
+      serviceMaterial      : String(50);
+      month                : String(20);
+      status               : String(50)  default 'draft';
+      totalAmount          : Integer     default 0;
+      items                : Association to many SalesOrderItemsV2 on items.salesOrder = $self;
 }
 
 entity SalesOrderItemsV2 : managed {
   key itemId          : String(50)  not null;
       salesOrder      : Association to SalesOrdersV2 not null;
       transactionId   : String(20);
-      examCode        : String(50);
+      serviceMaterial : String(50);
       examNameEn      : String(200);
       price           : Integer;
       transactionDate : DateTime;
@@ -167,7 +146,6 @@ entity ModalityGroups : managed {
 entity ModalityGroupItems {
   key itemCode     : String(50);
       group        : Association to ModalityGroups not null;
-      examCode     : String(50) not null;
       serviceTypes : Association to many ModalityServiceTypes on serviceTypes.item = $self;
 }
 
@@ -175,4 +153,18 @@ entity ModalityServiceTypes {
   key serviceTypeCode : String(50);
       item            : Association to ModalityGroupItems not null;
       name            : String(200) not null;
+      material        : Association to Materials on material.examCode = serviceTypeCode;
+}
+
+entity Materials : managed {
+  key materialCode   : String(50)    not null;
+      descriptionEn  : String(200);
+      descriptionAr  : String(200);
+      modality       : String(10);
+      modalityGroup  : String(100);
+      materialGroup1 : String(100);
+      naphisCode     : String(50);
+      scanType       : String(100);
+      examCode       : String(50);
+      pricing        : Decimal(15,2);
 }

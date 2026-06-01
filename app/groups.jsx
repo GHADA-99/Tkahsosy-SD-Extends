@@ -3,6 +3,12 @@
 function GroupDetailModal({ group, onClose }) {
   const pct = Math.min(100, Math.round((group.qtyUpdated / group.qtyOrig) * 100));
   const finished = group.finished || pct >= 100;
+  const [expandedItems, setExpandedItems] = useState(() => new Set());
+  const toggleItem = (id) => setExpandedItems(prev => {
+    const next = new Set(prev);
+    next.has(id) ? next.delete(id) : next.add(id);
+    return next;
+  });
 
   // Close on backdrop click
   const onBackdrop = (e) => { if (e.target === e.currentTarget) onClose(); };
@@ -51,15 +57,17 @@ function GroupDetailModal({ group, onClose }) {
                 <div className="lbl">Discount</div>
                 <div className="val" style={{color: 'var(--teal-700)'}}>{group.discount}%</div>
               </div>
-              <div className="modal-stat">
-                <div className="lbl">Status</div>
-                <div style={{marginTop: 4}}>
-                  <span className={"status-chip " + (finished ? 'finished' : 'in-progress')}>
-                    <span className="dot"/>
-                    {finished ? 'Finished' : 'In Progress'}
-                  </span>
+              {finished && (
+                <div className="modal-stat">
+                  <div className="lbl">Status</div>
+                  <div style={{marginTop: 4}}>
+                    <span className="status-chip finished">
+                      <span className="dot"/>
+                      Finished
+                    </span>
+                  </div>
                 </div>
-              </div>
+              )}
               <div className="modal-stat">
                 <div className="lbl">Original Qty</div>
                 <div className="val">{group.qtyOrig.toLocaleString()}</div>
@@ -103,41 +111,75 @@ function GroupDetailModal({ group, onClose }) {
                 Modality IDs
                 <span className="pill">{group.items.length}</span>
               </div>
-              <table className="modal-table">
-                <thead>
-                  <tr>
-                    <th style={{textAlign: 'left'}}>Modality ID</th>
-                    <th style={{textAlign: 'left'}}>Exam Code</th>
-                    <th style={{textAlign: 'left'}}>Service Types</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {group.items.map(item => (
-                    <tr key={item.id}>
-                      <td><span className="mid-id">{item.id}</span></td>
-                      <td><span className="exam-code-cell">{item.code}</span></td>
-                      <td>
-                        {item.serviceTypes && item.serviceTypes.length > 0 && (
-                          <div style={{display: 'flex', flexWrap: 'wrap', gap: 4}}>
-                            {item.serviceTypes.map(st => (
-                              <span key={st.id} style={{
-                                display: 'inline-flex', alignItems: 'center', gap: 4,
-                                padding: '2px 7px', borderRadius: 999,
-                                background: 'color-mix(in oklab, var(--accent) 10%, transparent)',
-                                border: '1px solid color-mix(in oklab, var(--accent) 25%, var(--border))',
-                                fontSize: 10.5, fontWeight: 500, color: 'var(--accent-700)',
+              <div style={{border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden'}}>
+                {group.items.map((item, i) => {
+                  const sms = item.serviceTypes || [];
+                  const open = expandedItems.has(item.id);
+                  return (
+                    <div key={item.id} style={{borderBottom: i < group.items.length - 1 ? '1px solid var(--border)' : 'none'}}>
+                      <button
+                        onClick={() => toggleItem(item.id)}
+                        style={{
+                          width: '100%', padding: '9px 12px',
+                          display: 'flex', alignItems: 'center', gap: 8,
+                          background: open ? 'color-mix(in oklab, var(--accent) 6%, var(--surface))' : 'var(--surface)',
+                          border: 'none', cursor: 'pointer', textAlign: 'left',
+                          transition: 'background .15s',
+                        }}
+                      >
+                        <I.ChevronRight size={13} style={{
+                          color: 'var(--accent)',
+                          transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform .2s', flexShrink: 0,
+                        }}/>
+                        <span className="mid-id" style={{fontFamily: "'JetBrains Mono', monospace", fontSize: 12, fontWeight: 700}}>{item.id}</span>
+                        <span style={{
+                          marginLeft: 4, padding: '1px 7px', borderRadius: 999,
+                          background: open
+                            ? 'color-mix(in oklab, var(--accent) 15%, transparent)'
+                            : 'var(--surface-2)',
+                          border: '1px solid var(--border)',
+                          fontSize: 10.5, fontWeight: 600,
+                          color: open ? 'var(--accent-700)' : 'var(--muted)',
+                        }}>
+                          {sms.length} material{sms.length !== 1 ? 's' : ''}
+                        </span>
+                        <I.ChevronDown size={11} style={{
+                          marginLeft: 'auto', color: 'var(--muted)',
+                          transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+                          transition: 'transform .2s', flexShrink: 0,
+                        }}/>
+                      </button>
+                      {open && (
+                        <div style={{
+                          borderTop: '1px solid var(--border)',
+                          background: 'color-mix(in oklab, var(--accent) 3%, var(--surface-2))',
+                        }}>
+                          {sms.length === 0
+                            ? <div style={{padding: '10px 12px 10px 36px', fontSize: 12, color: 'var(--muted)'}}>No service materials</div>
+                            : sms.map((st, j) => (
+                              <div key={st.id} style={{
+                                display: 'flex', alignItems: 'center', gap: 10,
+                                padding: '7px 12px 7px 36px',
+                                borderBottom: j < sms.length - 1 ? '1px solid color-mix(in oklab, var(--border) 60%, transparent)' : 'none',
                               }}>
-                                <I.Tag size={8}/>
-                                {st.name}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                                <span style={{
+                                  fontFamily: "'JetBrains Mono', monospace",
+                                  fontSize: 11, fontWeight: 600, color: 'var(--accent-700)',
+                                  background: 'color-mix(in oklab, var(--accent) 8%, transparent)',
+                                  border: '1px solid color-mix(in oklab, var(--accent) 22%, var(--border))',
+                                  padding: '1px 7px', borderRadius: 4, flexShrink: 0,
+                                }}>{st.id}</span>
+                                <span style={{fontSize: 12, color: 'var(--ink-2)'}}>{st.name}</span>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           )}
 
@@ -167,13 +209,13 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(group.qtyUpdated);
   const [expanded, setExpanded] = useState(false);
-  const [expandedItems, setExpandedItems] = useState(new Set());
+  const [expandedItems, setExpandedItems] = useState(() => new Set());
   const [modalOpen, setModalOpen] = useState(false);
   const hasItems = group.items && group.items.length > 0;
 
-  const toggleItem = (itemId) => setExpandedItems(prev => {
+  const toggleItem = (id) => setExpandedItems(prev => {
     const next = new Set(prev);
-    next.has(itemId) ? next.delete(itemId) : next.add(itemId);
+    next.has(id) ? next.delete(id) : next.add(id);
     return next;
   });
 
@@ -184,29 +226,6 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
     onUpdate({ ...group, qtyUpdated: n, finished: n >= group.qtyOrig ? true : group.finished });
     setEditing(false);
   };
-
-  const TH = ({ children, align }) => (
-    <th style={{
-      padding: '7px 10px',
-      fontWeight: 600, fontSize: '10.5px', textTransform: 'uppercase',
-      letterSpacing: '.04em', color: 'var(--muted)',
-      background: 'color-mix(in oklab, var(--surface-2) 80%, var(--surface))',
-      borderBottom: '1px solid var(--border)',
-      textAlign: align || 'left', whiteSpace: 'nowrap',
-    }}>{children}</th>
-  );
-
-  const TD = ({ children, align, mono, i }) => (
-    <td style={{
-      padding: '8px 10px',
-      borderBottom: '1px solid var(--border)',
-      background: i % 2 !== 0 ? 'color-mix(in oklab, var(--surface-2) 40%, transparent)' : 'transparent',
-      textAlign: align || 'left',
-      fontSize: 12.5,
-      fontVariantNumeric: mono ? 'tabular-nums' : 'normal',
-      color: 'var(--ink)',
-    }}>{children}</td>
-  );
 
   return (
     <div className="group-card">
@@ -270,10 +289,12 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
       </div>
 
       <div className="group-foot">
-        <span className={"status-chip " + (finished ? 'finished' : 'in-progress')}>
-          <span className="dot"/>
-          {finished ? 'Finished' : 'In Progress'}
-        </span>
+        {finished && (
+          <span className="status-chip finished">
+            <span className="dot"/>
+            Finished
+          </span>
+        )}
         {!readOnly && <span style={{fontSize: 11, color: 'var(--muted)', marginLeft: 'auto', marginRight: 4}}>Mark finished</span>}
         {!readOnly && <button className="switch" data-on={finished} onClick={() => onToggle(group)} aria-label="Toggle finished"/>}
       </div>
@@ -326,7 +347,7 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
         </button>
       )}
 
-      {/* ── Expanded modalities table ── */}
+      {/* ── Expanded modalities accordion ── */}
       {expanded && hasItems && (
         <div style={{
           marginTop: 8,
@@ -335,7 +356,6 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
           overflow: 'hidden',
           boxShadow: '0 2px 8px color-mix(in oklab, var(--accent) 8%, transparent)',
         }}>
-          {/* Table header */}
           <div style={{
             padding: '8px 12px 6px',
             background: 'color-mix(in oklab, var(--accent) 5%, var(--surface))',
@@ -352,104 +372,71 @@ function GroupCard({ group, onToggle, onUpdate, readOnly }) {
             }}>{group.items.length} {group.items.length === 1 ? 'modality' : 'modalities'}</span>
           </div>
 
-          <div style={{overflowX: 'auto'}}>
-            <table style={{width: '100%', borderCollapse: 'collapse', fontSize: 12.5}}>
-              <thead>
-                <tr>
-                  <TH>Modality ID</TH>
-                  <TH>Exam Code</TH>
-                  <TH align="center">Service Types</TH>
-                </tr>
-              </thead>
-              <tbody>
-                {group.items.map((item, i) => {
-                  const hasServiceTypes = item.serviceTypes && item.serviceTypes.length > 0;
-                  const itemExpanded = expandedItems.has(item.id);
-                  return (
-                    <React.Fragment key={item.id}>
-                      <tr
-                        onClick={hasServiceTypes ? () => toggleItem(item.id) : undefined}
-                        style={{cursor: hasServiceTypes ? 'pointer' : 'default'}}
-                      >
-                        <TD i={i}>
-                          <span style={{display: 'flex', alignItems: 'center', gap: 6}}>
-                            {hasServiceTypes && (
-                              <I.Chevron size={11} style={{
-                                flexShrink: 0,
-                                color: 'var(--accent)',
-                                transform: itemExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                                transition: 'transform .18s',
-                              }}/>
-                            )}
-                            <span style={{
-                              fontFamily: "'JetBrains Mono', monospace",
-                              fontSize: 11.5, fontWeight: 600,
-                              color: 'var(--ink)',
-                            }}>{item.id}</span>
-                          </span>
-                        </TD>
-                        <TD i={i}>
+          {group.items.map((item, i) => {
+            const sms = item.serviceTypes || [];
+            const open = expandedItems.has(item.id);
+            return (
+              <div key={item.id} style={{borderBottom: i < group.items.length - 1 ? '1px solid var(--border)' : 'none'}}>
+                <button
+                  onClick={() => toggleItem(item.id)}
+                  style={{
+                    width: '100%', padding: '9px 12px',
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    background: open ? 'color-mix(in oklab, var(--accent) 6%, var(--surface))' : 'var(--surface)',
+                    border: 'none', cursor: 'pointer', textAlign: 'left',
+                    transition: 'background .15s',
+                  }}
+                >
+                  <I.ChevronRight size={13} style={{
+                    color: 'var(--accent)',
+                    transform: open ? 'rotate(90deg)' : 'rotate(0deg)',
+                    transition: 'transform .2s', flexShrink: 0,
+                  }}/>
+                  <span style={{fontFamily: "'JetBrains Mono', monospace", fontSize: 11.5, fontWeight: 700, color: 'var(--ink)'}}>{item.id}</span>
+                  <span style={{
+                    marginLeft: 4, padding: '1px 7px', borderRadius: 999,
+                    background: open ? 'color-mix(in oklab, var(--accent) 15%, transparent)' : 'var(--surface-2)',
+                    border: '1px solid var(--border)',
+                    fontSize: 10.5, fontWeight: 600,
+                    color: open ? 'var(--accent-700)' : 'var(--muted)',
+                  }}>
+                    {sms.length} material{sms.length !== 1 ? 's' : ''}
+                  </span>
+                  <I.ChevronDown size={11} style={{
+                    marginLeft: 'auto', color: 'var(--muted)',
+                    transform: open ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform .2s', flexShrink: 0,
+                  }}/>
+                </button>
+                {open && (
+                  <div style={{
+                    borderTop: '1px solid var(--border)',
+                    background: 'color-mix(in oklab, var(--accent) 3%, var(--surface-2))',
+                  }}>
+                    {sms.length === 0
+                      ? <div style={{padding: '10px 12px 10px 36px', fontSize: 12, color: 'var(--muted)'}}>No service materials</div>
+                      : sms.map((st, j) => (
+                        <div key={st.id} style={{
+                          display: 'flex', alignItems: 'center', gap: 10,
+                          padding: '7px 12px 7px 36px',
+                          borderBottom: j < sms.length - 1 ? '1px solid color-mix(in oklab, var(--border) 60%, transparent)' : 'none',
+                        }}>
                           <span style={{
                             fontFamily: "'JetBrains Mono', monospace",
-                            fontSize: 11.5, fontWeight: 400,
-                            color: 'var(--muted)',
-                          }}>{item.code}</span>
-                        </TD>
-                        <TD i={i} align="center">
-                          {hasServiceTypes && (
-                            <span style={{
-                              display: 'inline-flex', alignItems: 'center', gap: 4,
-                              padding: '2px 8px', borderRadius: 999,
-                              background: itemExpanded
-                                ? 'color-mix(in oklab, var(--accent) 15%, transparent)'
-                                : 'var(--surface-2)',
-                              border: '1px solid ' + (itemExpanded
-                                ? 'color-mix(in oklab, var(--accent) 30%, var(--border))'
-                                : 'var(--border)'),
-                              fontSize: 10.5, fontWeight: 600,
-                              color: itemExpanded ? 'var(--accent-700)' : 'var(--muted)',
-                            }}>
-                              <I.Tag size={9}/>
-                              {item.serviceTypes.length}
-                            </span>
-                          )}
-                        </TD>
-                      </tr>
-
-                      {itemExpanded && hasServiceTypes && item.serviceTypes.map((st, si) => (
-                        <tr key={st.id} style={{
-                          background: 'color-mix(in oklab, var(--accent) 4%, var(--surface))',
-                        }}>
-                          <td colSpan={3} style={{
-                            padding: '6px 10px 6px 32px',
-                            borderBottom: '1px solid var(--border)',
-                            fontSize: 11.5,
-                          }}>
-                            <span style={{display: 'flex', alignItems: 'center', gap: 8}}>
-                              <span style={{
-                                width: 1, height: 14,
-                                background: 'color-mix(in oklab, var(--accent) 40%, transparent)',
-                                flexShrink: 0,
-                              }}/>
-                              <I.Tag size={10} style={{color: 'var(--accent)', flexShrink: 0}}/>
-                              <span style={{
-                                fontFamily: "'JetBrains Mono', monospace",
-                                fontSize: 10.5, fontWeight: 500, color: 'var(--muted)',
-                                marginRight: 6,
-                              }}>{st.id}</span>
-                              <span style={{fontSize: 12, color: 'var(--ink)', fontWeight: 500}}>
-                                {st.name}
-                              </span>
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                            fontSize: 11, fontWeight: 600, color: 'var(--accent-700)',
+                            background: 'color-mix(in oklab, var(--accent) 8%, transparent)',
+                            border: '1px solid color-mix(in oklab, var(--accent) 22%, var(--border))',
+                            padding: '1px 7px', borderRadius: 4, flexShrink: 0,
+                          }}>{st.id}</span>
+                          <span style={{fontSize: 12, color: 'var(--ink-2)'}}>{st.name}</span>
+                        </div>
+                      ))
+                    }
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -475,24 +462,116 @@ function ModIcon({ code, size = 18 }) {
   }
 }
 
-function ModalityGroups({ groups, setGroups, readOnly }) {
+function ModalityGroups({ groups, setGroups, readOnly, onToast, onSMExport, onSMImport }) {
   const toggle = (g) => setGroups(gs => gs.map(x => x.id === g.id ? { ...x, finished: !x.finished } : x));
   const update = (g) => setGroups(gs => gs.map(x => x.id === g.id ? g : x));
   const finishedCount = groups.filter(g => g.finished).length;
 
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [deleting,    setDeleting]    = useState(false);
+
+  const handleDeleteAll = async () => {
+    setConfirmOpen(false);
+    setDeleting(true);
+    let failed = 0;
+
+    // 1 — service types (leaf)
+    for (const g of groups) {
+      for (const item of (g.items || [])) {
+        for (const st of (item.serviceTypes || [])) {
+          const res = await fetch(`/api/ModalityServiceTypes('${encodeURIComponent(st.id)}')`, { method: 'DELETE' });
+          if (!res.ok) failed++;
+        }
+      }
+    }
+    // 2 — items
+    for (const g of groups) {
+      for (const item of (g.items || [])) {
+        const res = await fetch(`/api/ModalityGroupItems('${encodeURIComponent(item.id)}')`, { method: 'DELETE' });
+        if (!res.ok) failed++;
+      }
+    }
+    // 3 — groups (root)
+    for (const g of groups) {
+      const res = await fetch(`/api/ModalityGroups('${encodeURIComponent(g.id)}')`, { method: 'DELETE' });
+      if (!res.ok) failed++;
+    }
+
+    const total = groups.length;
+    setGroups([]);
+    setDeleting(false);
+    if (failed === 0) {
+      onToast && onToast(`Deleted all ${total} modality group${total !== 1 ? 's' : ''}`);
+    } else {
+      onToast && onToast(`Done — ${failed} record${failed !== 1 ? 's' : ''} failed to delete`);
+    }
+  };
+
   return (
     <div className="card">
+      {/* Confirmation modal */}
+      {confirmOpen && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 300,
+          background: 'rgba(0,0,0,.45)', backdropFilter: 'blur(2px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'var(--surface)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)', padding: 24, width: 380,
+            boxShadow: 'var(--shadow-lg)',
+          }}>
+            <div style={{display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10}}>
+              <div style={{
+                width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+                background: 'var(--rose-50)', display: 'grid', placeItems: 'center',
+              }}>
+                <I.Trash size={17} style={{color: 'var(--rose)'}}/>
+              </div>
+              <div style={{fontWeight: 600, fontSize: 14}}>Delete all modality groups?</div>
+            </div>
+            <p style={{fontSize: 13, color: 'var(--muted)', margin: '0 0 20px', lineHeight: 1.5}}>
+              This will permanently delete all <strong>{groups.length}</strong> modality group{groups.length !== 1 ? 's' : ''}, their items, and service types. This cannot be undone.
+            </p>
+            <div style={{display: 'flex', justifyContent: 'flex-end', gap: 8}}>
+              <button className="btn ghost sm" onClick={() => setConfirmOpen(false)}>Cancel</button>
+              <button className="btn danger sm" onClick={handleDeleteAll}
+                style={{background: 'var(--rose)', color: '#fff', border: 'none'}}>
+                <I.Trash size={13}/> Delete All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="card-head">
         <h2><I.Layers size={15}/> Modality Groups</h2>
-        <span className="sub">· {finishedCount} of {groups.length} complete</span>
+
         <div className="spacer"/>
         {!readOnly && <button className="btn ghost sm"><I.Sliders size={13}/> Bulk edit</button>}
         {!readOnly && <button className="btn primary sm"><I.Plus size={13}/> New group</button>}
+        <button
+          className="btn sm"
+          onClick={() => groups.length > 0 && setConfirmOpen(true)}
+          disabled={deleting || groups.length === 0}
+          style={{display: 'inline-flex', alignItems: 'center', gap: 5,
+            color: groups.length > 0 ? 'var(--rose)' : undefined,
+            borderColor: groups.length > 0 ? 'color-mix(in oklab, var(--rose) 40%, var(--border))' : undefined}}
+        >
+          {deleting
+            ? <><span style={{width:6,height:6,borderRadius:'50%',background:'currentColor',display:'inline-block',opacity:.5}}/> Deleting…</>
+            : <><I.Trash size={13}/> Delete All</>}
+        </button>
       </div>
       <div className="groups-grid">
         {groups.map(g => (
           <GroupCard key={g.id} group={g} onToggle={toggle} onUpdate={update} readOnly={readOnly}/>
         ))}
+        {groups.length === 0 && (
+          <div style={{gridColumn: '1 / -1', padding: '48px 0', textAlign: 'center', color: 'var(--muted)', fontSize: 13}}>
+            No modality groups.
+          </div>
+        )}
       </div>
     </div>
   );

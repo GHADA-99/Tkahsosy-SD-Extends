@@ -1,4 +1,0 @@
-salesOrderId,erpSalesOrderId,examCode,month,status,totalAmount
-SO-2026-1001,ERP-SO-88210,CT-CHEST-C,May 2026,draft,2561
-SO-2026-1002,ERP-SO-88211,MRI-BRAIN-C,May 2026,confirmed,2901
-SO-2026-1003,ERP-SO-88212,PET-ONCO,May 2026,draft,9613
